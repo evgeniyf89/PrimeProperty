@@ -1,0 +1,453 @@
+<!DOCTYPE html>
+<html>
+  <head>
+    <style>
+      body {
+        padding: 25px;
+        font: 16px Helvetica;
+        overflow-y: hidden;
+      }
+
+      select {
+        margin-bottom: 1em;
+        padding: 0.25em;
+        border: 0;
+        border-bottom: 2px solid currentcolor;
+        font-weight: bold;
+        letter-spacing: 0.15em;
+        border-radius: 0;
+      }
+
+      select:focus,
+      select:active {
+        outline: 0;
+        border-bottom-color: rgb(47, 95, 144);
+      }
+
+      .input {
+        position: relative;
+        bottom: 20px;
+      }
+
+      .container {
+        justify-content: flex-end;
+        flex-direction: column;
+        display: flex;
+        height: 45vh;
+      }
+      .container .btn-holder {
+        justify-content: flex-end;
+        display: flex;
+      }
+
+      .button {
+        border: none;
+        padding: 10px 25px;
+        text-align: center;
+        text-decoration: none;
+        display: inline-flex;
+        font-size: 16px;
+        margin: 15px 15px;
+        margin-bottom: auto;
+        transition-duration: 0.4s;
+        cursor: pointer;
+        background-color: white;
+        color: black;
+        border: 1px solid rgb(47, 95, 144);
+      }
+      .active,
+      .button:hover {
+        background-color: rgb(47, 95, 144);
+        color: white;
+      }
+
+      div.dashed {
+        border-top: 1px solid #bbb;
+        margin-bottom: 10px;
+      }
+    </style>
+  </head>
+  <body onload="setSelectOption()">
+    <img id="image" />
+    <div class="dragArea">
+      <input
+        type="file"
+        class="input"
+        multiple
+        accept="image/jpeg,application/pdf"
+        id="imageFile"
+      />
+      <div class="dashed"></div>
+      <select id="selectbox" onchange="changeFormat(this)" data-selected=""></select>
+
+      <div class="container">
+        <div class="btn-holder">
+          <button id="uploadButton" class="button active">Upload</button>
+          <button class="button" onclick="cancel()">Cancel</button>
+        </div>
+      </div>
+    </div>
+    <script src="sl_lib/watermark.js"></script>
+    <script>
+      const cancel = () => window.close();
+
+      const getUrlParameters = () => {
+        const queryString = decodeURIComponent(location.search.substring(1));
+        const params = {};
+        const queryStringParts = queryString.split("&");
+        for (var i = 0; i < queryStringParts.length; i++) {
+          var pieces = queryStringParts[i].split("=");
+          params[pieces[0].toLowerCase()] = pieces.length === 1 ? null : pieces[1];
+        }
+        return params;
+      };
+
+      const _xrm = parent.Xrm;
+      const _fileInput = document.getElementById("imageFile");
+      const _uploadButton = document.getElementById("uploadButton");
+      const WATERMARK = "sl_watermark_big.png";
+
+      const _objModel = { BaseFolder: "", Base: [], Resize: [] };
+      const _uploadFormatData = { Type: {}, Entity: "" };
+      const _inputParameter = getUrlParameters();
+
+      const setSelectOption = async () => {
+        const responce = await parent.Xrm.Utility.getEntityMetadata("sl_upload_format", [
+          "sl_type",
+          "sl_entity",
+        ]);
+        const attrs = Object.entries(responce.Attributes._collection["sl_type"].OptionSet);
+        const optionSetValue = Object.entries(
+          responce.Attributes._collection["sl_entity"].OptionSet
+        ).find((x) => x[1].text === _inputParameter.logicalname);
+        _uploadFormatData.Entity = optionSetValue.length > 0 && optionSetValue[0];
+        const selectBox = document.getElementById("selectbox");
+        attrs.forEach((a) => {
+          const text = a[1].text;
+          if (text !== "Videos") {
+            const value = a[0];
+            const option = document.createElement("option");
+            option.text = text;
+            option.value = value;
+
+            selectBox.appendChild(option);
+          }
+        });
+        const firstOption = selectBox.options[0];
+        firstOption.selected = "selected";
+        selectBox.dispatchEvent(new Event("change"));
+      };
+
+      const changeFormat = (target) => {
+        const option = target.options[target.selectedIndex];
+        _uploadFormatData.Type = { [option.value]: option.text };
+        _objModel.BaseFolder = option.text;
+      };
+
+      const setWatermark = async (baseImage, watermarkImage) => {
+        const request = await fetch(baseImage);
+        const blob = await request.blob();
+        const img = await watermark([blob, watermarkImage], { type: blob.type }).image(
+          watermark.image.lowerRight()
+        );
+        return img.src;
+      };
+
+      const readImages = async (event) => {
+        clearData();
+        const files = event.target.files;
+        const image = new Image();
+        for (let i = 0; i < files.length; i++) {
+          const fileTracker = new FileReader();
+          const file = files[i];
+          if (!file.type.match("/jpeg|/pdf")) {
+            alert("That file wasn't an jpeg or pdf format.");
+            return;
+          }
+          fileTracker.readAsDataURL(file);
+
+          await new Promise((resolve) => {
+            fileTracker.onload = resolve;
+          });
+          if (file.type.match("/jpeg")) {
+            image.src = fileTracker.result;
+            await new Promise((resolve) => {
+              image.onload = resolve;
+            });
+          }
+
+          const image64 = {
+            FullName: file.name,
+            Base64: fileTracker.result,
+            FolderName: "",
+            MimeType: file.type,
+            Height: image.height,
+            Width: image.width,
+            LastModifiedDate: file.lastModifiedDate,
+          };
+          _objModel.Base.push(image64);
+        }
+      };
+
+      const uploadImages = async () => {
+        try {
+          _xrm.Utility.showProgressIndicator("Loading");
+          const images = _objModel.Base;
+          if (!images || images.length === 0) {
+            _xrm.Navigation.openAlertDialog("Files not uploaded");
+            return;
+          }
+          const formatData = Object.keys(_uploadFormatData.Type);
+          const formats = await getUploadFormat();
+          for (let i = 0; i < formats.length; i++) {
+            const format = formats[i];
+            const width = format.sl_width;
+            const height = format.sl_height;
+            const quality = format.sl_quality / 100;
+            const name = format.sl_name;
+            const id = format.sl_upload_formatid;
+            const withWatermark = format.sl_not_install_watermarkbit;
+
+            const resImagesPromise = [];
+            for (let i = 0; i < images.length; i++) {
+              const baseImage = images[i];
+              if (baseImage.MimeType === "application/pdf") continue;
+              const promise = resizeImage(
+                baseImage.Base64,
+                width,
+                height,
+                quality,
+                baseImage.MimeType
+              )
+                .then((resImage) => {
+                  return _inputParameter.withwatermark && !withWatermark
+                    ? setWatermark(resImage, WATERMARK)
+                    : resImage;
+                })
+                .then((imgWithWaterMark) => {
+                  return {
+                    NameForUrl: makeName(baseImage.FullName),
+                    FullName: baseImage.FullName,
+                    Base64: imgWithWaterMark,
+                    FolderName: `${name}`,
+                    MimeType: baseImage.MimeType,
+                    Formatid: id,
+                    Height: height,
+                    Width: width,
+                  };
+                });
+              resImagesPromise.push(promise);
+            }
+            const resizesImage64 = await Promise.all(resImagesPromise);
+            _objModel.Resize.push(...resizesImage64);
+          }
+
+          const uploadRequest = formRequest();
+          const responce = await _xrm.WebApi.online.execute(uploadRequest);
+          const json = await responce.json();
+          const res = JSON.parse(json.responce);
+          if (!res.IsError) {
+            clearData();
+            _fileInput.value = "";
+          }
+          _xrm.Utility.alertDialog(res.Message);
+        } catch (e) {
+          _xrm.Utility.alertDialog(e.message);
+        } finally {
+          _xrm.Utility.closeProgressIndicator();
+        }
+      };
+
+      const formRequest = () => {
+        return {
+          regardingobject: {
+            "@odata.type": `Microsoft.Dynamics.CRM.${_inputParameter.logicalname}`,
+            [`${_inputParameter.logicalname}id`]: `${_inputParameter.data}`,
+          },
+          images: JSON.stringify(_objModel),
+          getMetadata: function () {
+            return {
+              boundParameter: null,
+              parameterTypes: {
+                images: {
+                  typeName: "Edm.String",
+                  structuralProperty: 1,
+                },
+                regardingobject: {
+                  typeName: `${_inputParameter.logicalname}`,
+                  structuralProperty: 5,
+                },
+              },
+              operationType: 0,
+              operationName: "sl_upload_image",
+            };
+          },
+        };
+      };
+
+      const resizeImage = async (file, width, height, quality, mimeType) => {
+        const image = new Image();
+        image.src = file;
+        await new Promise((resolve) => {
+          image.onload = resolve;
+        });
+
+        const canvas = document.createElement("canvas"),
+          ctx = canvas.getContext("2d"),
+          oc = document.createElement("canvas"),
+          octx = oc.getContext("2d");
+        const inputWidth = image.width;
+        const inputHeight = image.height;
+        const inputCoef = inputWidth / inputHeight;
+        const coef = width / height;
+        const step = 0.5;
+        if (inputCoef < coef) {
+          canvas.width = width;
+          canvas.height = (width * inputHeight) / inputWidth;
+          if (inputWidth * step > width) {
+            const mul = 1 / step;
+            let cur = {
+              width: Math.floor(inputWidth * step),
+              height: Math.floor(inputHeight * step),
+            };
+
+            oc.width = cur.width;
+            oc.height = cur.height;
+
+            octx.drawImage(image, 0, 0, cur.width, cur.height);
+
+            while (cur.width * step > width) {
+              cur = {
+                width: Math.floor(cur.width * step),
+                height: Math.floor(cur.height * step),
+              };
+              octx.drawImage(
+                oc,
+                0,
+                0,
+                cur.width * mul,
+                cur.height * mul,
+                0,
+                0,
+                cur.width,
+                cur.height
+              );
+            }
+            ctx.drawImage(oc, 0, 0, cur.width, cur.height, 0, 0, canvas.width, canvas.height);
+          } else {
+            ctx.drawImage(image, 0, 0, canvas.width, canvas.height);
+          }
+
+          image.src = canvas.toDataURL(mimeType, quality);
+          await new Promise((resolve) => {
+            image.onload = resolve;
+          });
+
+          const center = (image.height - height) * 0.5;
+          // const outputY = center < 0 ? 0 : center;
+          canvas.height = height;
+
+          ctx.drawImage(image, 0, center, width, height, 0, 0, width, height);
+
+          return canvas.toDataURL(mimeType, quality);
+        } else {
+          canvas.width = (height * inputWidth) / inputHeight;
+          canvas.height = height;
+          if (inputHeight * step > height) {
+            const mul = 1 / step;
+            let cur = {
+              width: Math.floor(inputWidth * step),
+              height: Math.floor(inputHeight * step),
+            };
+
+            oc.width = cur.width;
+            oc.height = cur.height;
+
+            octx.drawImage(image, 0, 0, cur.width, cur.height);
+
+            while (cur.height * step > height) {
+              cur = {
+                width: Math.floor(cur.width * step),
+                height: Math.floor(cur.height * step),
+              };
+              octx.drawImage(
+                oc,
+                0,
+                0,
+                cur.width * mul,
+                cur.height * mul,
+                0,
+                0,
+                cur.width,
+                cur.height
+              );
+            }
+            ctx.drawImage(oc, 0, 0, cur.width, cur.height, 0, 0, canvas.width, canvas.height);
+          } else {
+            ctx.drawImage(image, 0, 0, canvas.width, canvas.height);
+          }
+
+          image.src = canvas.toDataURL(mimeType, quality);
+
+          await new Promise((resolve) => {
+            image.onload = resolve;
+          });
+
+          const center = (image.width - width) * 0.5;
+          canvas.width = width;
+          ctx.drawImage(image, center, 0, width, height, 0, 0, width, height);
+          return canvas.toDataURL(mimeType, quality);
+        }
+      };
+
+      const getUploadFormat = async () => {
+        const typeArr = Object.keys(_uploadFormatData.Type);
+        const formatFilter = typeArr.map((key) => `<value>${key}</value>`).join("");
+        if (!formatFilter) return [];
+        const query = `<fetch no-lock='true' >
+                                        <entity name='sl_upload_format' >
+                                          <attribute name='sl_height' />
+                                          <attribute name='sl_name' />
+                                          <attribute name='sl_width' />
+                                          <attribute name='sl_quality' />
+                                          <attribute name='sl_type' />
+                                          <attribute name='sl_not_install_watermarkbit' />
+                                          <filter type='and' >
+                                            <condition attribute='statecode' operator='eq' value='0' />
+                                            <condition attribute='sl_entity' operator='eq' value='${_uploadFormatData.Entity}' />
+                                            <condition attribute='sl_type' operator='in' >
+                                              ${formatFilter}
+                                            </condition>
+                                          </filter>
+                                        </entity>
+                                      </fetch>`;
+        const responceFormat = await _xrm.WebApi.retrieveMultipleRecords(
+          "sl_upload_format",
+          `?fetchXml=${query}`
+        );
+        return responceFormat.entities;
+      };
+
+      const clearData = () => {
+        _objModel.Base = [];
+        _objModel.Resize = [];
+      };
+
+      const makeName = (oldName) => {
+        const match = oldName.match(".jpg|.jpeg");
+        const length = match.index;
+        let result = "";
+        const characters = "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789";
+        const charactersLength = characters.length;
+        for (let i = 0; i < length; i++) {
+          result += characters.charAt(Math.floor(Math.random() * charactersLength));
+        }
+        return result + oldName.substring(length);
+      };
+
+      _uploadButton.addEventListener("click", uploadImages);
+
+      _fileInput.addEventListener("change", readImages);
+    </script>
+  </body>
+</html>

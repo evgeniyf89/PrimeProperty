@@ -1,0 +1,418 @@
+<!DOCTYPE html>
+<html>
+  <head>
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <style>
+      * {
+        box-sizing: border-box;
+      }
+
+      /* Create three equal columns that floats next to each other */
+      .column {
+        float: left;
+        width: 45%;
+        padding: 10px;
+        height: auto; /* Should be removed. Only for demonstration */
+      }
+
+      div.columnRight {
+        width: 10%;
+        padding: 10px;
+      }
+
+      textarea {
+        width: 100%;
+        height: auto;
+      }
+
+      .row {
+        display: flex;
+        flex-direction: row;
+        min-height: 20px;
+      }
+
+      .button {
+        border: none;
+        padding: 16px 32px;
+        text-align: center;
+        text-decoration: none;
+        display: inline-block;
+        font-size: 16px;
+        margin: 4px 2px;
+        transition-duration: 0.4s;
+        cursor: pointer;
+        background-color: white;
+        color: black;
+        border: 2px solid #e7e7e7;
+      }
+      .button:hover {
+        background-color: #e7e7e7;
+      }
+
+      .row:after {
+        content: "";
+        display: table;
+        clear: both;
+      }
+    </style>
+  </head>
+  <body onload="loadInputData()">
+    <div class="table" id="table">
+      <div class="row">
+        <div class="column"></div>
+        <div class="column"></div>
+        <div class="columnRight">Fixed</div>
+      </div>
+    </div>
+    <div class="row">
+      <div class="column">
+        <select id="base_language" disabled>
+          <option value="en">EN</option>
+        </select>
+      </div>
+      <div class="column">
+        <select id="languages" onchange="changeLanguage(this)"></select>
+      </div>
+    </div>
+    <div class="row">
+      <div class="column">
+        <button type="submit" class="button" id="translete_btn" onclick="translete()">
+          Translate
+        </button>
+      </div>
+      <div class="column">
+        <button type="submit" class="button" id="save_btn" onclick="save()">Save</button>
+      </div>
+    </div>
+    <script>
+      let _objModel = {
+        Field: {},
+        Language: {},
+      };
+      const BASE_LANGUGE_NAME = "base";
+      const TRANSLETE_LANGUGE_NAME = "translete";
+      let _data = [];
+      const _inputEntityRef = {};
+      const fctx = parent.Xrm;
+
+      loadInputData = async () => {
+        const inputParameter = getUrlParameters();
+        _inputEntityRef.id = inputParameter.data.replace("{", "").replace("}", "");
+        _inputEntityRef.logicalName = inputParameter.logicalname;
+
+        const attr = getAttrs();
+        let languages;
+        let project;
+        try {
+          const query = `?$select=sl_name,sl_code&$filter=statecode eq 0 and sl_code ne 'en'`;
+          languages = await fctx.WebApi.retrieveMultipleRecords("sl_language", query);
+          _data = await getData();
+          project = _data.entities[0];
+        } catch (error) {
+          fctx.Navigation.openErrorDialog({
+            message: error.message,
+            details: error.raw,
+          });
+          console.error(error);
+          return;
+        }
+        const languagesElem = document.getElementById("languages");
+        languages.entities.forEach((l) => {
+          const option = document.createElement("option");
+          option.text = l.sl_name;
+          option.value = l.sl_code;
+          option.id = l.sl_languageid;
+          languagesElem.add(option, 0);
+        });
+        const table = document.getElementById("table");
+        const textarea = [];
+        const baselanguage = document.getElementById("base_language").value;
+        const transleteLanguage = document.getElementById("languages").value;
+        _objModel.Language[BASE_LANGUGE_NAME] = baselanguage;
+        _objModel.Language[TRANSLETE_LANGUGE_NAME] = transleteLanguage;
+        attr.forEach((a) => {
+          const attrValue = project[a];
+          if (attrValue) {
+            const row = document.createElement("div");
+            row.className = "row";
+            row.id = a;
+
+            const columnLeft = document.createElement("div");
+            columnLeft.className = "column";
+            const textareaBase = document.createElement("textarea");
+            textareaBase.className = "base";
+            textareaBase.readOnly = true;
+            const textNode = document.createTextNode(attrValue);
+            textareaBase.appendChild(textNode);
+            columnLeft.appendChild(textareaBase);
+            row.appendChild(columnLeft);
+            textarea.push(textareaBase);
+
+            const columnCentre = document.createElement("div");
+            columnCentre.className = "column";
+            const textareaTranslete = document.createElement("textarea");
+            textareaTranslete.className = "translete";
+
+            textareaTranslete.addEventListener(
+              "input",
+              debounce((event) => {
+                console.log(300);
+                const target = event.target;
+                target.style.height = "25px";
+                target.style.height = target.scrollHeight + "px";
+                const rowid = getRowid(target);
+                _objModel.Field[rowid].Translete = target.value;
+              }, 300),
+              false
+            );
+
+            columnCentre.appendChild(textareaTranslete);
+            row.appendChild(columnCentre);
+
+            const columnRight = document.createElement("div");
+            columnRight.className = "columnRight";
+            const input = document.createElement("input");
+            input.type = "checkbox";
+            input.addEventListener("change", (event) => {
+              const target = event.currentTarget;
+              const rowid = getRowid(target);
+              textareaTranslete.readOnly = target.checked;
+              _objModel.Field[rowid].Fix = target.checked;
+            });
+            columnRight.appendChild(input);
+            row.appendChild(columnRight);
+            table.appendChild(row);
+            _objModel.Field[a] = { Base: attrValue, Translete: "", Fix: false };
+          }
+        });
+        textarea.forEach((x) =>
+          x.setAttribute("style", "height:" + x.scrollHeight + "px;overflow-y:hidden;")
+        );
+        languagesElem.dispatchEvent(new Event("change"));
+      };
+
+      debounce = (fn, wait) => {
+        let timeout;
+        return function (...args) {
+          const later = () => {
+            clearTimeout(timeout);
+            fn(...args);
+          };
+          clearTimeout(timeout);
+          timeout = setTimeout(later, wait);
+        };
+      };
+
+      getRowid = (el) => {
+        if (!el) return;
+        let i = 0;
+        while (i < 4) {
+          const parent = el.parentElement;
+          if (parent.className === "row") {
+            return parent.id;
+          }
+          el = parent;
+          i++;
+        }
+      };
+
+      translete = async () => {
+        const textForTranslete = [];
+        const rowsId = [];
+        for (const [key, value] of Object.entries(_objModel.Field)) {
+          if (value.Base && !value.Fix) {
+            textForTranslete.push(value.Base);
+            rowsId.push(key);
+          }
+        }
+        if (textForTranslete.length === 0) {
+          fctx.Utility.alertDialog("All transfers are recorded.");
+          return;
+        }
+        const data = {
+          q: textForTranslete,
+          target: _objModel.Language[TRANSLETE_LANGUGE_NAME],
+          source: _objModel.Language[BASE_LANGUGE_NAME],
+        };
+        const url =
+          "https://www.googleapis.com/language/translate/v2?key=AIzaSyAV1HiJQX9wkfbRJwhVv2EVCg9IP0iz1PU";
+        const responce = await fetch(url, {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json",
+          },
+          body: JSON.stringify(data),
+        });
+        const json = await responce.json();
+        const translations = json.data.translations;
+        for (var i = 0; i < rowsId.length; i++) {
+          const row = document.getElementById(rowsId[i]);
+          const transleteArea = row.getElementsByClassName("translete")[0];
+          transleteArea.value = translations[i].translatedText;
+          transleteArea.dispatchEvent(new Event("input"));
+        }
+      };
+
+      changeLanguage = (target) => {
+        const option = target.options[target.selectedIndex];
+        const languageid = option.id;
+        _objModel.Language.id = languageid;
+        _objModel.Language.name = option.text;
+        const dataLanguage = getProjectsLanguage(languageid);
+        _objModel.Language[TRANSLETE_LANGUGE_NAME] = target.value;
+        for (const [key, value] of Object.entries(_objModel.Field)) {
+          const row = document.getElementById(key);
+          const transleteArea = row.getElementsByClassName("translete")[0];
+
+          const value = dataLanguage ? dataLanguage[`aa.${key}`] : "";
+          const transleteValue = value ? value : "";
+          transleteArea.value = transleteValue;
+
+          const fixName = "aa." + key.replace("sl_", "sl_fixed_");
+          const checkbox = row.getElementsByTagName("input")[0];
+          checkbox.checked = dataLanguage ? dataLanguage[fixName] : false;
+          transleteArea.dispatchEvent(new Event("input"));
+          checkbox.dispatchEvent(new Event("change"));
+        }
+      };
+
+      getData = () => {
+        const logicalName = _inputEntityRef.logicalName;
+        if (logicalName === "sl_project") {
+          const query = `<fetch no-lock='true' >
+              <entity name='sl_project' >
+                <attribute name='sl_main_description' />
+                <attribute name='sl_major_benefit' />
+                <attribute name='sl_location_description' />
+                <attribute name='sl_specification_description' />
+                <attribute name='sl_note' />
+                <filter type='and' >
+                  <condition attribute='sl_projectid' operator='eq' value='${_inputEntityRef.id}' />
+                </filter>
+                <link-entity name='sl_projectlanguage' from='sl_projectid' to='sl_projectid' link-type='outer' alias='aa' >
+                  <attribute name='sl_main_description' />
+                  <attribute name='sl_major_benefit' />
+                  <attribute name='sl_location_description' />
+                  <attribute name='sl_specification_description' />
+                  <attribute name='sl_note' />
+                  <attribute name='sl_fixed_main_description' />
+                  <attribute name='sl_fixed_note' />
+                  <attribute name='sl_fixed_specification_description' />
+                  <attribute name='sl_fixed_location_description' />
+                  <attribute name='sl_fixed_major_benefit' />
+                  <attribute name='sl_languageid' />
+                  <attribute name='sl_projectlanguageid' />
+                </link-entity>
+              </entity>
+            </fetch>`;
+
+          return parent.Xrm.WebApi.retrieveMultipleRecords("sl_project", "?fetchXml=" + query);
+        }
+        if (logicalName === "sl_unit") {
+          const query = `<fetch no-lock='true' >
+                          <entity name='sl_unit' >
+                            <attribute name='sl_description' />
+                            <filter>
+                              <condition attribute='sl_unitid' operator='eq' value='${_inputEntityRef.id}' />
+                            </filter>
+                            <link-entity name='sl_units_language' from='sl_unitid' to='sl_unitid' link-type='outer' alias='aa' >
+                              <attribute name='sl_languageid' />
+                              <attribute name='sl_description' />
+                              <attribute name='sl_fixed_description' />
+                              <attribute name='sl_units_languageid' />
+                            </link-entity>
+                          </entity>
+                        </fetch>`;
+          return parent.Xrm.WebApi.retrieveMultipleRecords("sl_unit", "?fetchXml=" + query);
+        }
+      };
+
+      getUrlParameters = () => {
+        const queryString = decodeURIComponent(location.search.substring(1));
+        const params = {};
+        const queryStringParts = queryString.split("&");
+        for (var i = 0; i < queryStringParts.length; i++) {
+          var pieces = queryStringParts[i].split("=");
+          params[pieces[0].toLowerCase()] = pieces.length === 1 ? null : pieces[1];
+        }
+        return params;
+      };
+
+      save = () => {
+        const languageid = _objModel.Language.id;
+        const dataLanguage = getProjectsLanguage(languageid);
+        const entity = {};
+        Object.entries(_objModel.Field).forEach((eb) => {
+          const name = eb[0];
+          const value = eb[1];
+          const isFix = value.Fix;
+          if (isFix) {
+            entity[name] = value.Translete;
+            const fixName = name.replace("sl_", "sl_fixed_");
+            entity[fixName] = value.Fix;
+          }
+        });
+
+        if (Object.keys(entity).length === 0) {
+          fctx.Utility.alertDialog("No fixed transfers.");
+          return;
+        }
+        const succsec = async (message) => {
+          fctx.Utility.closeProgressIndicator();
+          fctx.Utility.alertDialog(message);
+          _data = await getData();
+        };
+
+        const fail = (error) => {
+          fctx.Utility.closeProgressIndicator();
+          fctx.Utility.alertDialog(error.message);
+        };
+
+        const logical = _inputEntityRef.logicalName;
+        const languageEntityName =
+          logical === "sl_project" ? "sl_projectlanguage" : "sl_units_language";
+        const action = !dataLanguage
+          ? () => {
+              entity[`${logical}id@odata.bind`] = `/${logical}s(${_inputEntityRef.id})`;
+              entity["sl_languageid@odata.bind"] = `/sl_languages(${languageid})`;
+              entity["sl_name"] = _objModel.Language.name;
+              fctx.WebApi.createRecord(languageEntityName, entity).then(
+                async (result) => await succsec("Projects language created."),
+                fail
+              );
+            }
+          : () =>
+              fctx.WebApi.updateRecord(
+                languageEntityName,
+                dataLanguage[`aa.${languageEntityName}id`],
+                entity
+              ).then(async (result) => await succsec("Projects language updated."), fail);
+
+        fctx.Utility.confirmDialog("Save translations?", () => {
+          fctx.Utility.showProgressIndicator();
+          action();
+        });
+      };
+
+      getProjectsLanguage = (languageid) => {
+        return _data.entities.find((x) => x["aa.sl_languageid"] == languageid);
+      };
+
+      getAttrs = () => {
+        switch (_inputEntityRef.logicalName) {
+          case "sl_project":
+            return [
+              "sl_main_description",
+              "sl_major_benefit",
+              "sl_location_description",
+              "sl_specification_description",
+              "sl_note",
+            ];
+          case "sl_unit":
+            return ["sl_description"];
+            break;
+        }
+      };
+    </script>
+  </body>
+</html>

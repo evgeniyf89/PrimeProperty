@@ -1,0 +1,81 @@
+<!DOCTYPE html>
+<html>
+  <body>
+    <div id="googleMap" style="width: 100%; height: 400px"></div>
+    <script>
+      markers = [];
+      init = async () => {
+        const fctx = parent.Xrm.Page;
+        const latAttr = fctx.getAttribute("sl_google_map_lat");
+        const lngAttr = fctx.getAttribute("sl_google_map_lng");
+        let lat = latAttr.getValue();
+        let lng = lngAttr.getValue();
+        //sl_distance_sea
+        const entityName = parent.Xrm.Page.data.entity.getEntityName();
+        const distanceSeaAttrName =
+          entityName == "sl_project"
+            ? "sl_distance_sea"
+            : entityName == "sl_unit"
+            ? "sl_distance_to_sea"
+            : "";
+        const distanceToSea = fctx.getAttribute(distanceSeaAttrName).getValue();
+        let zoom = distanceToSea && distanceToSea <= 1000 ? 15 : 12;
+        if (!lat || !lng) {
+          const areaRef = fctx.getAttribute("sl_areaid").getValue();
+          if (areaRef) {
+            const area = await parent.Xrm.WebApi.retrieveRecord(
+              areaRef[0].entityType,
+              areaRef[0].id,
+              "?$select=sl_lat,sl_lng"
+            );
+            lat = area.sl_lat;
+            lng = area.sl_lng;
+          }
+          if (!lat || !lng) {
+            const cyrcus = await retriveCyprus();
+            lat = cyrcus.sl_google_map_lat;
+            lng = cyrcus.sl_google_map_lng;
+            zoom = 6;
+          }
+        }
+
+        const myLatLng = { lat: lat, lng: lng };
+
+        const map = new google.maps.Map(document.getElementById("googleMap"), {
+          zoom: zoom,
+          center: myLatLng,
+        });
+
+        const marker = new google.maps.Marker({
+          position: myLatLng,
+          map,
+          draggable: true,
+        });
+        markers.push(marker);
+      };
+
+      const retriveCyprus = async () => {
+        const query = `<fetch top='1' no-lock='true' >
+        <entity name='sl_country' >
+          <attribute name='sl_countryid' />
+          <attribute name='sl_google_map_lng' />
+          <attribute name='sl_google_map_lat' />
+          <filter type='and' >
+            <condition attribute='sl_name' operator='eq' value='Cyprus' />
+            <condition attribute="sl_google_map_lat" operator="not-null" />
+            <condition attribute="sl_google_map_lng" operator="not-null" />
+          </filter>
+        </entity>
+      </fetch>`;
+        const responceCountry = await parent.Xrm.WebApi.retrieveMultipleRecords(
+          "sl_country",
+          `?fetchXml=${query}`
+        );
+        return responceCountry.entities.length > 0
+          ? responceCountry.entities[0]
+          : { sl_google_map_lat: 34.987253, sl_google_map_lng: 33.192444 };
+      };
+    </script>
+    <script src="https://maps.googleapis.com/maps/api/js?key=AIzaSyAV1HiJQX9wkfbRJwhVv2EVCg9IP0iz1PU&callback=init"></script>
+  </body>
+</html>

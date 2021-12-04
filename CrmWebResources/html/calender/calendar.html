@@ -1,0 +1,379 @@
+<script type="text/javascript" src="https://cdn.jsdelivr.net/jquery/latest/jquery.min.js"></script>
+<script
+  type="text/javascript"
+  src="https://cdn.jsdelivr.net/momentjs/latest/moment.min.js"
+></script>
+<script type="text/javascript" src="daterangepicker.js"></script>
+<link rel="stylesheet" type="text/css" href="daterangepicker.css" />
+
+<style>
+  p {
+    font: 14px Verdana;
+    float: right;
+    margin-right: 10px;
+  }
+  table,
+  th,
+  td {
+    border: solid 1px #ddd;
+    border-collapse: collapse;
+    padding: 2px 3px;
+    text-align: center;
+  }
+  th {
+    font-weight: bold;
+  }
+</style>
+<div>
+  <div>
+    <input type="text" name="daterange" />
+  </div>
+  <br /><br />
+  <p id="showData"></p>
+</div>
+
+<script>
+  var _xrm = parent.Xrm;
+  var _shortrent = {};
+  var _inputParameter = (function () {
+    var queryString = decodeURIComponent(location.search.substring(1));
+    var params = {};
+    var queryStringParts = queryString.split("&");
+    for (var i = 0; i < queryStringParts.length; i++) {
+      var pieces = queryStringParts[i].split("=");
+      params[pieces[0].toLowerCase()] = pieces.length === 1 ? null : pieces[1];
+    }
+    return params;
+  })();
+
+  async function getShortRent(start, end) {
+    var logicalName = _inputParameter.logicalname;
+    var id = _inputParameter.data;
+    var request = {
+      data: {
+        "@odata.type": `Microsoft.Dynamics.CRM.${logicalName}`,
+        [`${logicalName}id`]: `${id}`,
+      },
+      startDate: start.format("YYYY.MM.DD"),
+      endDate: end.format("YYYY.MM.DD"),
+      getMetadata: function () {
+        return {
+          boundParameter: null,
+          parameterTypes: {
+            data: {
+              typeName: `${logicalName}`,
+              structuralProperty: 5,
+            },
+            startDate: {
+              typeName: `Edm.String`,
+              structuralProperty: 1,
+            },
+            endDate: {
+              typeName: `Edm.String`,
+              structuralProperty: 1,
+            },
+          },
+          operationType: 0,
+          operationName: "sl_check_short_rent",
+        };
+      },
+    };
+    var responce = await _xrm.WebApi.online.execute(request);
+    var json = await responce.json();
+    var shortrent = JSON.parse(json.responce);
+    if (!shortrent.IsError) {
+      return shortrent;
+    }
+    _xrm.Utility.alertDialog(shortrent.Message);
+  }
+
+  (async function () {
+    var startDateStr = _inputParameter.start;
+    var endDateStr = _inputParameter.end;
+    var listingid = _inputParameter.listingid;
+    if (startDateStr && endDateStr) {
+      var startDate = moment(startDateStr).startOf("day");
+      var endDate = moment(endDateStr).startOf("day");
+      var year = startDate.years();
+      var month = startDate.months();
+      _firstDay = moment([year, month, 1]).startOf("day");
+      _lastDay = moment(_firstDay, "DD-MM-YYYY").add(2, "month").startOf("day");
+      _shortrent = await getShortRent(_firstDay, _lastDay);
+    }
+    if (!_shortrent) return;
+    var currntDateUtc = moment().startOf("day");
+    var startDate = _shortrent.fromDate
+      ? moment(_shortrent.fromDate).startOf("day")
+      : currntDateUtc;
+    _lastDay = !_lastDay
+      ? moment(startDate, "DD-MM-YYYY").add(2, "month").startOf("day")
+      : _lastDay;
+    _firstDay = !_firstDay ? startDate : _firstDay;
+    var daterange = $('input[name="daterange"]');
+    daterange.daterangepicker(
+      {
+        startDate: startDate,
+        endDate: _shortrent.toDate ? moment(_shortrent.toDate).startOf("day") : currntDateUtc,
+        opens: "left",
+        minDate: currntDateUtc,
+        locale: {
+          format: "DD.MM.YYYY",
+          applyLabel: "Check dates",
+          cancelLabel: "Rent",
+          rentedLabel: "Reserve",
+        },
+        autoUpdateInput: true,
+        //autoApply: true,
+        isCustomDate: (inputDate) => {
+          var setCalendare = (rented) => {
+            if (!rented) return;
+            for (var i = 0; i < rented.length; i++) {
+              var rent = rented[i];
+              var from = moment(rent.dateFrom);
+              var to = moment(rent.dateTo);
+              if (from > _lastDay || from < _firstDay) break;
+              if (inputDate >= from && inputDate <= to) return true;
+            }
+          };
+
+          if (setCalendare(_shortrent.rented)) {
+            return "rented";
+          }
+
+          if (setCalendare(_shortrent.reserved, "reserved")) {
+            return "reserved";
+          }
+
+          if (setCalendare(_shortrent.rentedByOpportunity)) {
+            return "rentedByOpportunity";
+          }
+
+          if (setCalendare(_shortrent.reservedByOpportunity)) {
+            return "reservedByOpportunity";
+          }
+        },
+      },
+      checkDatesClick
+    );
+    async function checkDatesClick(start, end, label) {
+      clearTable();
+      var isCheck = await checkDates(start, end, label);
+      if (!isCheck) return;
+      var data = await retrivePrice(start, end);
+      createTableFromJSON(data);
+    }
+
+    daterange.on("clickPrev.daterangepicker", async function (ev, picker) {
+      var rightCalendar = picker.rightCalendar;
+      var month = rightCalendar.month.month();
+      var year = rightCalendar.month.year();
+      var daysInMonth = moment([year, month]).daysInMonth();
+      _lastDay = moment([year, month, daysInMonth]).startOf("day");
+
+      var leftCalendar = picker.leftCalendar;
+      var month = leftCalendar.month.month();
+      var year = leftCalendar.month.year();
+      _firstDay = moment([year, month, 1]).startOf("day");
+      _shortrent = await getShortRent(_firstDay, _lastDay);
+    });
+    daterange.on("cancel.daterangepicker", async function (ev, picker) {
+      var start = picker.startDate.startOf("day");
+      var end = picker.endDate.startOf("day");
+      var responce = await reserveOrRentProperty(start, end, "588610002");
+      _xrm.Utility.alertDialog(responce.Message);
+    });
+    daterange.on("rented.daterangepicker", async function (ev, picker) {
+      var start = picker.startDate.startOf("day");
+      var end = picker.endDate.startOf("day");
+      var responce = await reserveOrRentProperty(start, end, "588610003");
+      _xrm.Utility.alertDialog(responce.Message);
+    });
+
+    async function reserveOrRentProperty(start, end, status) {
+      _xrm.Utility.showProgressIndicator("Loading");
+      var isCheck = await checkDates(start, end);
+      if (!isCheck) {
+        _xrm.Utility.closeProgressIndicator();
+        return;
+      }
+      var logicalName = _inputParameter.logicalname;
+      var id = _inputParameter.data;
+      var request = {
+        data: {
+          "@odata.type": `Microsoft.Dynamics.CRM.${logicalName}`,
+          [`${logicalName}id`]: `${id}`,
+        },
+        startDate: start.format("YYYY.MM.DD"),
+        endDate: end.format("YYYY.MM.DD"),
+        status: status,
+        getMetadata: function () {
+          return {
+            boundParameter: null,
+            parameterTypes: {
+              data: {
+                typeName: `${logicalName}`,
+                structuralProperty: 5,
+              },
+              startDate: {
+                typeName: `Edm.String`,
+                structuralProperty: 1,
+              },
+              endDate: {
+                typeName: `Edm.String`,
+                structuralProperty: 1,
+              },
+              status: {
+                typeName: `Edm.String`,
+                structuralProperty: 1,
+              },
+            },
+            operationType: 0,
+            operationName: "sl_reserve_or_rent_property",
+          };
+        },
+      };
+      try {
+        var responce = await _xrm.WebApi.online.execute(request);
+        var json = await responce.json();
+        return JSON.parse(json.responce);
+      } catch (error) {
+        return { Message: error.message };
+      } finally {
+        _xrm.Utility.closeProgressIndicator();
+      }
+    }
+
+    async function checkDates(start, end, label) {
+      start = start.startOf("day");
+      end = end.startOf("day");
+      var shortrent = await getShortRent(start, end);
+      var diff = moment.duration(end - start);
+      var minSpan = shortrent.minDays;
+      var diffDays = diff.days();
+      if (diffDays < minSpan) {
+        _xrm.Utility.alertDialog(`The number of rental days is too small.`);
+        return;
+      }
+      var checkFunc = (x) => {
+        var from = new moment(x.dateFrom);
+        var to = new moment(x.dateTo);
+        return (
+          (start >= from && start <= to) ||
+          (end >= from && end <= to) ||
+          (start <= from && end >= to)
+        );
+      };
+      var reservedByOpportunity =
+        shortrent.reservedByOpportunity && shortrent.reservedByOpportunity.find(checkFunc);
+      if (reservedByOpportunity) {
+        _xrm.Utility.alertDialog(`Dates are not available for selection`);
+        return;
+      }
+      /*var reserved = shortrent.reserved && shortrent.reserved.find(checkFunc);
+      if (reserved) {
+        _xrm.Utility.alertDialog(`Dates are not available for selection`);
+        return;
+      }*/
+
+      var rentedByOpportunity =
+        shortrent.rentedByOpportunity && shortrent.rentedByOpportunity.find(checkFunc);
+      if (rentedByOpportunity) {
+        _xrm.Utility.alertDialog(`Dates are not available for selection`);
+        return;
+      }
+      return true;
+      /*var rented = shortrent.rented && shortrent.rented.find(checkFunc);
+      if (rented) {
+        _xrm.Utility.alertDialog(`Dates are not available for selection `);
+        return;
+      }*/
+    }
+
+    async function retrivePrice(startDate, endDate) {
+      var logicalName = "sl_listing";
+      var id = _inputParameter.listingid;
+      var request = {
+        data: {
+          "@odata.type": `Microsoft.Dynamics.CRM.${logicalName}`,
+          [`${logicalName}id`]: `${id}`,
+        },
+        startDate: startDate.add(1, "days").format("YYYY.MM.DD"),
+        endDate: endDate.add(1, "days").format("YYYY.MM.DD"),
+        getMetadata: function () {
+          return {
+            boundParameter: null,
+            parameterTypes: {
+              data: {
+                typeName: `${logicalName}`,
+                structuralProperty: 5,
+              },
+              startDate: {
+                typeName: `Edm.String`,
+                structuralProperty: 1,
+              },
+              endDate: {
+                typeName: `Edm.String`,
+                structuralProperty: 1,
+              },
+            },
+            operationType: 0,
+            operationName: "sl_retive_rent_price",
+          };
+        },
+      };
+      var responce = await _xrm.WebApi.online.execute(request);
+      var json = await responce.json();
+      var priceRange = JSON.parse(json.responce);
+      if (!priceRange.IsError) {
+        return priceRange;
+      }
+      _xrm.Utility.alertDialog(priceRange.Message);
+    }
+
+    function createTableFromJSON(data) {
+      var col = [];
+      for (var i = 0; i < data.length; i++) {
+        for (var key in data[i]) {
+          if (col.indexOf(key) === -1) {
+            col.push(key);
+          }
+        }
+      }
+      var table = document.createElement("table");
+      var tr = table.insertRow(-1);
+      for (var i = 0; i < col.length; i++) {
+        var th = document.createElement("th");
+        th.innerHTML = capitalizeFirstLetter(col[i]);
+        tr.appendChild(th);
+      }
+      for (var i = 0; i < data.length; i++) {
+        tr = table.insertRow(-1);
+
+        for (var j = 0; j < col.length; j++) {
+          var tabCell = tr.insertCell(-1);
+          tabCell.innerHTML =
+            col[j] == "date" ? moment(data[i][col[j]]).format("DD.MM.YYYY") : data[i][col[j]];
+        }
+      }
+      tr = table.insertRow(-1);
+      for (var j = 0; j < col.length; j++) {
+        var tabCell = tr.insertCell(-1);
+        tabCell.innerHTML =
+          col[j] == "date" ? "Rental fee" : data.map((x) => x.price).reduce((a, b) => a + b, 0);
+      }
+
+      var divContainer = document.getElementById("showData");
+      divContainer.innerHTML = "";
+      divContainer.appendChild(table);
+    }
+
+    function clearTable() {
+      var divContainer = document.getElementById("showData");
+      divContainer.innerHTML = "";
+    }
+
+    function capitalizeFirstLetter(string) {
+      return string.charAt(0).toUpperCase() + string.slice(1);
+    }
+  })();
+</script>
