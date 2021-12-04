@@ -60,20 +60,23 @@ namespace SoftLine.ActionPlugins
 
             var rented = obj.Rented.FirstOrDefault();
             var reserved = obj.Reserved.FirstOrDefault();
+            Guid rentavailableid;
+            string message;
             if (rented != default || reserved != default)
             {
-                var rentavailableid = rented?.Id ?? reserved.Id;
+                rentavailableid = rented?.Id ?? reserved.Id;
                 UpdateRentavailable(status, startDate, endDate, rentavailableid, userService);
-                UpdateOpportynity(status, startDate, endDate, opportunityRef, userService);
-                UpdatePropertyOpportunity(status, startDate, endDate, rentalFree, data, userService);
-                context.OutputParameters["responce"] = JsonConvert.SerializeObject(new { IsError = false, Message = $"Short rent available updated" });
-                return;
+                message = "updated";
             }
             else
             {
-                CreateRentavailable(status, startDate, endDate, propertyOpportunity, userService);
-                context.OutputParameters["responce"] = JsonConvert.SerializeObject(new { IsError = false, Message = $"Short rent available created" });
+                var rentavailable = CreateRentavailable(status, startDate, endDate, propertyOpportunity, userService);
+                rentavailableid = rentavailable.Id;
+                message = "created";               
             }
+            UpdateOpportynity(status, startDate, endDate, opportunityRef, userService);
+            UpdatePropertyOpportunity(status, startDate, endDate, rentalFree, data, userService);
+            context.OutputParameters["responce"] = JsonConvert.SerializeObject(new { IsError = false, Message = $"Short rent available {message}" });
         }
 
         public Entity CreateRentavailable(ShortRentSTRentSstatus status, DateTime startDate, DateTime endDate, Entity propertyOpportunity, IOrganizationService userService)
