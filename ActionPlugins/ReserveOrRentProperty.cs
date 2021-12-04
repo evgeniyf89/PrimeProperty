@@ -89,7 +89,8 @@ namespace SoftLine.ActionPlugins
                 ["sl_property"] = propertyRef,
                 ["sl_date_from"] = startDate,
                 ["sl_date_to"] = endDate,
-                ["sl_st_rent_statuscode"] = new OptionSetValue((int)status)
+                ["sl_st_rent_statuscode"] = new OptionSetValue((int)status),
+                ["sl_property_for_opportunityid"] = propertyOpportunity.ToEntityReference()
             };
             rentavailable.Id = userService.Create(rentavailable);
             return rentavailable;

@@ -405,7 +405,7 @@
         this.container.find('.applyBtn, .cancelBtn, .rentedBtn').addClass(this.buttonClasses);
         if (this.applyButtonClasses.length)
             this.container.find('.applyBtn').addClass(this.applyButtonClasses);
-        if (this.cancelButtonClasses.length){
+        if (this.cancelButtonClasses.length) {
             this.container.find('.rentedBtn').addClass(this.cancelButtonClasses);
             this.container.find('.cancelBtn').addClass(this.cancelButtonClasses);
         }
@@ -1021,11 +1021,11 @@
         },
 
         updateFormInputs: function () {
- /*
-  '<button class="rentedBtn" type="button"></button>' +
-                '<button class="cancelBtn" type="button"></button>' +
-                '<button class="applyBtn" disabled="disabled" type="button"></button> ' +
- */
+            /*
+             '<button class="rentedBtn" type="button"></button>' +
+                           '<button class="cancelBtn" type="button"></button>' +
+                           '<button class="applyBtn" disabled="disabled" type="button"></button> ' +
+            */
             if (this.singleDatePicker || (this.endDate && (this.startDate.isBefore(this.endDate) || this.startDate.isSame(this.endDate)))) {
                 this.container.find('button.applyBtn').prop('disabled', false);
                 this.container.find('button.rentedBtn').prop('disabled', false);
@@ -1264,7 +1264,6 @@
                     this.leftCalendar.month.add(1, 'month');
             }
             this.element.trigger('clickPrev.daterangepicker', this);
-            this.updateCalendars();
         },
 
         hoverDate: function (e) {

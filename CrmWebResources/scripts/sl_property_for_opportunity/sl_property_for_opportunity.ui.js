@@ -26,7 +26,8 @@ Softline.PropertyForOpportunity.Buttons = {
                 position: 1,
                 title: "Calendar",
             };
-            Xrm.Navigation.navigateTo(pageInput, navigationOptions);
+            const successCallback = () => fctx.data.refresh()
+            Xrm.Navigation.navigateTo(pageInput, navigationOptions).then(successCallback);
         },
         enable: async (fctx) => {
             const opportunityAttr = fctx.getAttribute("sl_opportunityid");
