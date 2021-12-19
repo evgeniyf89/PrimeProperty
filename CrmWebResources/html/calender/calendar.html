@@ -49,10 +49,15 @@
   async function getShortRent(start, end) {
     var logicalName = _inputParameter.logicalname;
     var id = _inputParameter.data;
+    var opportunityid = _inputParameter.opportunityid;
     var request = {
       data: {
         "@odata.type": `Microsoft.Dynamics.CRM.${logicalName}`,
         [`${logicalName}id`]: `${id}`,
+      },
+      opportunityRef: {
+        "@odata.type": `Microsoft.Dynamics.CRM.opportunity`,
+        ["opportunityid"]: `${opportunityid}`,
       },
       startDate: start.format("YYYY.MM.DD"),
       endDate: end.format("YYYY.MM.DD"),
@@ -62,6 +67,10 @@
           parameterTypes: {
             data: {
               typeName: `${logicalName}`,
+              structuralProperty: 5,
+            },
+            opportunityRef:{
+              typeName: `opportunity`,
               structuralProperty: 5,
             },
             startDate: {
@@ -102,9 +111,8 @@
     }
     if (!_shortrent) return;
     var currntDateUtc = moment().startOf("day");
-    var startDate = _shortrent.fromDate
-      ? moment(_shortrent.fromDate).startOf("day")
-      : currntDateUtc;
+    var startDate = startDateStr ? moment(startDateStr).startOf("day") : currntDateUtc;
+    var endDate = endDateStr ? moment(endDateStr).startOf("day") : currntDateUtc;;
     _lastDay = !_lastDay
       ? moment(startDate, "DD-MM-YYYY").add(2, "month").startOf("day")
       : _lastDay;
@@ -113,7 +121,7 @@
     daterange.daterangepicker(
       {
         startDate: startDate,
-        endDate: _shortrent.toDate ? moment(_shortrent.toDate).startOf("day") : currntDateUtc,
+        endDate: endDate,
         opens: "left",
         minDate: currntDateUtc,
         locale: {
@@ -177,12 +185,7 @@
       _shortrent = await getShortRent(_firstDay, _lastDay);
       picker.updateCalendars();
     });
-    daterange.on("cancel.daterangepicker", async function (ev, picker) {
-      var start = picker.startDate.startOf("day");
-      var end = picker.endDate.startOf("day");
-      var responce = await reserveOrRentProperty(start, end, "588610003");
-      _xrm.Utility.alertDialog(responce.Message);
-    });
+   
     daterange.on("rented.daterangepicker", async function (ev, picker) {
       var start = picker.startDate.startOf("day");
       var end = picker.endDate.startOf("day");
@@ -197,8 +200,8 @@
         _xrm.Utility.closeProgressIndicator();
         return;
       }
-      var logicalName = _inputParameter.logicalname;
-      var id = _inputParameter.data;
+      var logicalName = "sl_property_for_opportunity";
+      var id = _inputParameter.propertyoppid;
       var request = {
         data: {
           "@odata.type": `Microsoft.Dynamics.CRM.${logicalName}`,

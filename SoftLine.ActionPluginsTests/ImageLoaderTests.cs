@@ -242,11 +242,12 @@ namespace SoftLine.ActionPlugins.Tests
         public void Calendar()
         {
             var calendar = new CalendarLogic();
-            var prop = new EntityReference("sl_property_for_opportunity", new Guid("3e132c12-5f2b-ec11-b6e5-000d3a268060"));
-            var start = new DateTime(2021, 12, 5);
-            var end = new DateTime(2021, 12, 15);
+            var prop = new EntityReference("sl_unit", new Guid("cfe22b82-c51a-ec11-b6e6-6045bd89207e"));
+            var opp = new EntityReference("opportunity", Guid.Parse("{11939991-932A-EC11-B6E5-000D3A268060}"));
+            var start = new DateTime(2022, 02, 01);
+            var end = new DateTime(2022, 03, 30);
             var rents = calendar.RetriveRent(prop, start, end, _service);
-            var obj = calendar.Map(rents);
+            var obj = calendar.Map(rents,start,end, opp);
             var t = JsonConvert.SerializeObject(obj);
         }
 
@@ -265,32 +266,37 @@ namespace SoftLine.ActionPlugins.Tests
         [TestMethod()]
         public void ReserveOrRentProperty()
         {
-            var data = new EntityReference("sl_property_for_opportunity", new Guid("{5430D489-7752-EC11-8C62-000D3ABFC59F}"));
-            var calendar = new CalendarLogic();
-            var startDate = new DateTime(2022, 1, 23);
-            var endDate = new DateTime(2022, 1, 31);
+            var data = new EntityReference("sl_property_for_opportunity", new Guid("{9D6AF515-B044-EC11-8C62-6045BD8D28F3}"));
+            
+            var startDate = new DateTime(2022, 02, 1);
+            var endDate = new DateTime(2022, 02, 12);
             var status = ShortRentSTRentSstatus.Reserved;
 
-            var rents = calendar.RetriveRent(data, startDate, endDate, _service);
-            var obj = calendar.Map(rents);
-            if (obj.RentedByOpportunity.Any() || obj.ReservedByOpportunity.Any())
+            var reserveOrRentProperty = new ReserveOrRentProperty();
+
+            var propertyOpportunity = reserveOrRentProperty.RetrivePropertyOpportunity(data, _service);
+            var listing = propertyOpportunity.GetAttributeValue<EntityReference>("sl_listingid");
+            var opportunityRef = propertyOpportunity.GetAttributeValue<EntityReference>("sl_opportunityid");
+            var propertyRef = propertyOpportunity.GetAttributeValue<EntityReference>("sl_propertyid");
+
+            var calendar = new CalendarLogic();
+            var rents = calendar.RetriveRent(propertyRef, startDate, endDate, _service);
+            var obj = calendar.Map(rents, startDate, endDate, opportunityRef);
+            if (obj?.RentedByOpportunity.Any() ?? false)
             {
-                 JsonConvert.SerializeObject(new { IsError = true, Message = $"The number of rental days is too small." });
+                throw new Exception(JsonConvert.SerializeObject(new { IsError = true, Message = $"Dates are not available for selection." }));
                 return;
             };
             var rangeDays = (endDate - startDate).Days;
             if (rangeDays < obj.MinDays)
             {
-                JsonConvert.SerializeObject(new { IsError = true, Message = $"Dates are not available for selection." });
+                throw new Exception(JsonConvert.SerializeObject(new { IsError = true, Message = $"The number of rental days is too small." }));
                 return;
             };
-            var yy = new ReserveOrRentProperty();
-            var propertyOpportunity = yy.RetrivePropertyOpportunity(data, _service);
-            var listing = propertyOpportunity.GetAttributeValue<EntityReference>("sl_listingid");
-            var opportunityRef = propertyOpportunity.GetAttributeValue<EntityReference>("sl_opportunityid");
+
             if (listing is null)
             {
-                JsonConvert.SerializeObject(new { IsError = true, Message = $"listing is empty" });
+                throw new Exception(JsonConvert.SerializeObject(new { IsError = true, Message = $"listing is empty" }));
                 return;
             }
             var priceLogic = new RentPriceLogic();
@@ -300,21 +306,20 @@ namespace SoftLine.ActionPlugins.Tests
             var rentPricesObj = priceLogic.Map(from, to, rentPrices);
             var rentalFree = rentPricesObj.Sum(x => x.Price);
 
-            var rented = obj.Rented.FirstOrDefault();
             var reserved = obj.Reserved.FirstOrDefault();
-
-            if (rented != default || reserved != default)
+            string message;
+            if (reserved != default)
             {
-                var rentavailableid = rented?.Id ?? reserved.Id;
-                yy.UpdateRentavailable(status, startDate, endDate, rentavailableid, _service);
-                yy.UpdateOpportynity(status, startDate, endDate, opportunityRef, _service);
-                yy.UpdatePropertyOpportunity(status, startDate, endDate, rentalFree, data, _service);
-                return;
+                reserveOrRentProperty.UpdateRentavailable(status, startDate, endDate, reserved.Id, _service);
+                message = "updated";
             }
             else
             {
-                yy.CreateRentavailable(status, startDate, endDate, propertyOpportunity, _service);
+                var rentavailable = reserveOrRentProperty.CreateRentavailable(status, startDate, endDate, propertyOpportunity, _service);
+                message = "created";
             }
+            reserveOrRentProperty.UpdateOpportynity(status, startDate, endDate, opportunityRef, _service);
+            reserveOrRentProperty.UpdatePropertyOpportunity(status, startDate, endDate, rentalFree, data, _service);
         }
 
     }

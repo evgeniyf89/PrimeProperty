@@ -111,8 +111,7 @@
                 '</div>' +
                 '<div class="drp-buttons">' +
                 '<span class="drp-selected"></span>' +
-                '<button class="rentedBtn" type="button"></button>' +
-                '<button class="cancelBtn" type="button"></button>' +
+                '<button class="rentedBtn" type="button"></button>'  +
                 '<button class="applyBtn" disabled="disabled" type="button"></button> ' +
                 '</div>' +
                 '</div>';
@@ -406,11 +405,9 @@
         if (this.applyButtonClasses.length)
             this.container.find('.applyBtn').addClass(this.applyButtonClasses);
         if (this.cancelButtonClasses.length) {
-            this.container.find('.rentedBtn').addClass(this.cancelButtonClasses);
-            this.container.find('.cancelBtn').addClass(this.cancelButtonClasses);
+            this.container.find('.rentedBtn').addClass(this.cancelButtonClasses);           
         }
-        this.container.find('.applyBtn').html(this.locale.applyLabel);
-        this.container.find('.cancelBtn').html(this.locale.cancelLabel);
+        this.container.find('.applyBtn').html(this.locale.applyLabel);       
         this.container.find('.rentedBtn').html(this.locale.rentedLabel);
 
 

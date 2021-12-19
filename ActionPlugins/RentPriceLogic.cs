@@ -23,7 +23,7 @@ namespace SoftLine.ActionPlugins
                 var endDateStr = input["endDate"] as string;
 
                 var startDate = DateTime.Parse(startDateStr);
-                var endDate = DateTime.Parse(endDateStr);               
+                var endDate = DateTime.Parse(endDateStr);
                 if (data is null)
                 {
                     context.OutputParameters["responce"] = JsonConvert.SerializeObject(new { IsError = true, Message = $"input data is empty" });
@@ -32,7 +32,7 @@ namespace SoftLine.ActionPlugins
                 var serviceFactory = (IOrganizationServiceFactory)serviceProvider.GetService(typeof(IOrganizationServiceFactory));
                 var service = serviceFactory.CreateOrganizationService(null);
                 var rentPrices = RetriveRentPrice(data, startDate, endDate, service);
-                var ranges = Map(startDate, endDate, rentPrices);        
+                var ranges = Map(startDate, endDate, rentPrices);
                 context.OutputParameters["responce"] = JsonConvert.SerializeObject(ranges);
             }
             catch (Exception ex)
@@ -45,7 +45,7 @@ namespace SoftLine.ActionPlugins
             }
         }
 
-        public List<RentPrice> Map(DateTime startDate, DateTime endDate,IEnumerable<Entity> rentPrices)
+        public List<RentPrice> Map(DateTime startDate, DateTime endDate, IEnumerable<Entity> rentPrices)
         {
             var diff = (endDate - startDate).Days;
 
@@ -54,22 +54,27 @@ namespace SoftLine.ActionPlugins
             for (var i = 0; i < diff; i++)
             {
                 var date = startDate.AddDays(i);
-                var price = rentPrices
+                var shortRentPrice = rentPrices
                   .FirstOrDefault(x =>
                   {
                       var dateFrom = x.GetAttributeValue<AliasedValue>("price.sl_date_from")?.Value as DateTime?;
                       var dateTo = x.GetAttributeValue<AliasedValue>("price.sl_date_to")?.Value as DateTime?;
                       return date >= dateFrom && date <= dateTo;
-                  })
-                  ?.GetAttributeValue<AliasedValue>("price.sl_price")?.Value as Money ?? listingPrice;
-                var rentPrice = new RentPrice(date, price.Value);
+                  });
+
+                var price = shortRentPrice?.GetAttributeValue<AliasedValue>("price.sl_price")?.Value as Money ?? listingPrice;
+                var rentPrice = new RentPrice(date, price.Value)
+                {
+                    Owner = (shortRentPrice.GetAttributeValue<AliasedValue>("price.ownerid")?.Value as EntityReference)?.Name,
+                    Opportunity = (shortRentPrice.GetAttributeValue<AliasedValue>("price.sl_opportunityid")?.Value as EntityReference)?.Name,
+                };
                 ranges.Add(rentPrice);
             }
             return ranges;
         }
 
         public DataCollection<Entity> RetriveRentPrice(EntityReference listingRef, DateTime startDate, DateTime endDate, IOrganizationService service)
-        {
+        {         
             var query = $@"<fetch no-lock='true' >
                            <entity name='sl_listing' >
                              <attribute name='sl_short_rent' />
@@ -85,8 +90,18 @@ namespace SoftLine.ActionPlugins
                                  <condition attribute='sl_date_from' operator='on-or-before' value='{endDate:yyyy-MM-dd}' />
                                </filter>
                              </link-entity>
+                             <link-entity name='sl_unit' from='sl_unitid' to='sl_unitid' link-type='outer' alias='ae' >
+                               <link-entity name='sl_short_rent_available' from='sl_property' to='sl_unitid' link-type='outer' alias='shortRent' >
+                                 <attribute name='sl_opportunityid' />
+                                 <attribute name='ownerid' />
+                                 <filter type='and' >
+                                   <condition attribute='sl_date_to' operator='on-or-after' value='{startDate:yyyy-MM-dd}' />
+                                   <condition attribute='sl_date_from' operator='on-or-before' value='{endDate:yyyy-MM-dd}' />
+                                 </filter>
+                               </link-entity>
+                             </link-entity>
                            </entity>
-                         </fetch>";
+                         </fetch>"
             return service.RetrieveMultiple(new FetchExpression(query)).Entities;
         }
     }

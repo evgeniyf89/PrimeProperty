@@ -29,26 +29,31 @@ namespace SoftLine.ActionPlugins
             var serviceFactory = (IOrganizationServiceFactory)serviceProvider.GetService(typeof(IOrganizationServiceFactory));
             var systemService = serviceFactory.CreateOrganizationService(null);
             var userService = serviceFactory.CreateOrganizationService(context.UserId);
+
+
+            var propertyOpportunity = RetrivePropertyOpportunity(data, systemService);
+            var listing = propertyOpportunity.GetAttributeValue<EntityReference>("sl_listingid");
+            var opportunityRef = propertyOpportunity.GetAttributeValue<EntityReference>("sl_opportunityid");
+            var propertyRef = propertyOpportunity.GetAttributeValue<EntityReference>("sl_propertyid");
+
             var calendar = new CalendarLogic();
-            var rents = calendar.RetriveRent(data, startDate, endDate, systemService);
-            var obj = calendar.Map(rents);
-            if (obj.RentedByOpportunity.Any() || obj.ReservedByOpportunity.Any())
+            var rents = calendar.RetriveRent(propertyRef, startDate, endDate, systemService);
+            var obj = calendar.Map(rents, startDate, endDate, opportunityRef);
+            if (obj?.RentedByOpportunity.Any() ?? false)
             {
-                context.OutputParameters["responce"] = JsonConvert.SerializeObject(new { IsError = true, Message = $"The number of rental days is too small." });
+                context.OutputParameters["responce"] = JsonConvert.SerializeObject(new { IsError = true, Message = $"Dates are not available for selection." });
                 return;
             };
             var rangeDays = (endDate - startDate).Days;
             if (rangeDays < obj.MinDays)
             {
-                context.OutputParameters["responce"] = JsonConvert.SerializeObject(new { IsError = true, Message = $"Dates are not available for selection." });
+                context.OutputParameters["responce"] = JsonConvert.SerializeObject(new { IsError = true, Message = $"The number of rental days is too small." });
                 return;
             };
-            var propertyOpportunity = RetrivePropertyOpportunity(data, systemService);
-            var listing = propertyOpportunity.GetAttributeValue<EntityReference>("sl_listingid");
-            var opportunityRef = propertyOpportunity.GetAttributeValue<EntityReference>("sl_opportunityid");
-            if (listing is null || opportunityRef is null)
+            
+            if (listing is null)
             {
-                context.OutputParameters["responce"] = JsonConvert.SerializeObject(new { IsError = true, Message = $"listing is empty or opportunity is empty" });
+                context.OutputParameters["responce"] = JsonConvert.SerializeObject(new { IsError = true, Message = $"listing is empty" });
                 return;
             }
             var priceLogic = new RentPriceLogic();
@@ -57,21 +62,17 @@ namespace SoftLine.ActionPlugins
             var rentPrices = priceLogic.RetriveRentPrice(listing, from, to, systemService);
             var rentPricesObj = priceLogic.Map(from, to, rentPrices);
             var rentalFree = rentPricesObj.Sum(x => x.Price);
-
-            var rented = obj.Rented.FirstOrDefault();
-            var reserved = obj.Reserved.FirstOrDefault();
-            Guid rentavailableid;
+            
+            var reserved = obj.Reserved.FirstOrDefault();          
             string message;
-            if (rented != default || reserved != default)
-            {
-                rentavailableid = rented?.Id ?? reserved.Id;
-                UpdateRentavailable(status, startDate, endDate, rentavailableid, userService);
+            if (reserved != default)
+            {                
+                UpdateRentavailable(status, startDate, endDate, reserved.Id, userService);
                 message = "updated";
             }
             else
             {
-                var rentavailable = CreateRentavailable(status, startDate, endDate, propertyOpportunity, userService);
-                rentavailableid = rentavailable.Id;
+                var rentavailable = CreateRentavailable(status, startDate, endDate, propertyOpportunity, userService);               
                 message = "created";               
             }
             UpdateOpportynity(status, startDate, endDate, opportunityRef, userService);
@@ -110,6 +111,7 @@ namespace SoftLine.ActionPlugins
 
         public void UpdateOpportynity(ShortRentSTRentSstatus status, DateTime startDate, DateTime endDate, EntityReference opportunityRef, IOrganizationService userService)
         {
+            if (opportunityRef is null) return;
             var opportunity = new Entity(opportunityRef.LogicalName, opportunityRef.Id)
             {
                 ["sl_date_from"] = startDate,
