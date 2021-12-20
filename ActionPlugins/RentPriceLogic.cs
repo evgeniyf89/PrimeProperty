@@ -63,10 +63,20 @@ namespace SoftLine.ActionPlugins
                   });
 
                 var price = shortRentPrice?.GetAttributeValue<AliasedValue>("price.sl_price")?.Value as Money ?? listingPrice;
+
+                var shortRent = rentPrices
+                 .FirstOrDefault(x =>
+                 {
+                     var dateFrom = x.GetAttributeValue<AliasedValue>("shortRent.sl_date_from")?.Value as DateTime?;
+                     var dateTo = x.GetAttributeValue<AliasedValue>("shortRent.sl_date_to")?.Value as DateTime?;
+                     return date >= dateFrom && date <= dateTo;
+                 });
+
+
                 var rentPrice = new RentPrice(date, price.Value)
                 {
-                    Owner = (shortRentPrice.GetAttributeValue<AliasedValue>("price.ownerid")?.Value as EntityReference)?.Name,
-                    Opportunity = (shortRentPrice.GetAttributeValue<AliasedValue>("price.sl_opportunityid")?.Value as EntityReference)?.Name,
+                    Employee = (shortRent?.GetAttributeValue<AliasedValue>("shortRent.ownerid")?.Value as EntityReference)?.Name,
+                    ExistingReservation = (shortRent?.GetAttributeValue<AliasedValue>("shortRent.sl_opportunityid")?.Value as EntityReference)?.Name,
                 };
                 ranges.Add(rentPrice);
             }
@@ -74,7 +84,7 @@ namespace SoftLine.ActionPlugins
         }
 
         public DataCollection<Entity> RetriveRentPrice(EntityReference listingRef, DateTime startDate, DateTime endDate, IOrganizationService service)
-        {         
+        {
             var query = $@"<fetch no-lock='true' >
                            <entity name='sl_listing' >
                              <attribute name='sl_short_rent' />
@@ -94,6 +104,8 @@ namespace SoftLine.ActionPlugins
                                <link-entity name='sl_short_rent_available' from='sl_property' to='sl_unitid' link-type='outer' alias='shortRent' >
                                  <attribute name='sl_opportunityid' />
                                  <attribute name='ownerid' />
+                                 <attribute name='sl_date_from' />
+                                 <attribute name='sl_date_to' />
                                  <filter type='and' >
                                    <condition attribute='sl_date_to' operator='on-or-after' value='{startDate:yyyy-MM-dd}' />
                                    <condition attribute='sl_date_from' operator='on-or-before' value='{endDate:yyyy-MM-dd}' />
@@ -101,7 +113,7 @@ namespace SoftLine.ActionPlugins
                                </link-entity>
                              </link-entity>
                            </entity>
-                         </fetch>"
+                         </fetch>";
             return service.RetrieveMultiple(new FetchExpression(query)).Entities;
         }
     }

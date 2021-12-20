@@ -25,13 +25,8 @@
   }
 </style>
 <div>
-  <div>
-    <input type="text" name="daterange" />
-  </div>
-  <br /><br />
-  <p id="showData"></p>
+  <input type="text" name="daterange" />
 </div>
-
 <script>
   var _xrm = parent.Xrm;
   var _shortrent = {};
@@ -69,7 +64,7 @@
               typeName: `${logicalName}`,
               structuralProperty: 5,
             },
-            opportunityRef:{
+            opportunityRef: {
               typeName: `opportunity`,
               structuralProperty: 5,
             },
@@ -110,9 +105,9 @@
       _shortrent = await getShortRent(_firstDay, _lastDay);
     }
     if (!_shortrent) return;
-    var currntDateUtc = moment().startOf("day");
-    var startDate = startDateStr ? moment(startDateStr).startOf("day") : currntDateUtc;
-    var endDate = endDateStr ? moment(endDateStr).startOf("day") : currntDateUtc;;
+    var currentDateUtc = moment().startOf("day");
+    var startDate = startDateStr ? moment(startDateStr).startOf("day") : currentDateUtc;
+    var endDate = endDateStr ? moment(endDateStr).startOf("day") : currentDateUtc;
     _lastDay = !_lastDay
       ? moment(startDate, "DD-MM-YYYY").add(2, "month").startOf("day")
       : _lastDay;
@@ -123,7 +118,7 @@
         startDate: startDate,
         endDate: endDate,
         opens: "left",
-        minDate: currntDateUtc,
+        minDate: currentDateUtc,
         locale: {
           format: "DD.MM.YYYY",
           applyLabel: "Check dates",
@@ -185,7 +180,7 @@
       _shortrent = await getShortRent(_firstDay, _lastDay);
       picker.updateCalendars();
     });
-   
+
     daterange.on("rented.daterangepicker", async function (ev, picker) {
       var start = picker.startDate.startOf("day");
       var end = picker.endDate.startOf("day");
@@ -201,7 +196,7 @@
         return;
       }
       var logicalName = "sl_property_for_opportunity";
-      var id = _inputParameter.propertyoppid;
+      var id = _inputParameter.propertyOppid;
       var request = {
         data: {
           "@odata.type": `Microsoft.Dynamics.CRM.${logicalName}`,
@@ -335,15 +330,12 @@
     }
 
     function createTableFromJSON(data) {
-      var col = [];
-      for (var i = 0; i < data.length; i++) {
-        for (var key in data[i]) {
-          if (col.indexOf(key) === -1) {
-            col.push(key);
-          }
-        }
-      }
+      var isWithOwner = data.filter((x) => x.owner).length > 0;
+      var keys = Object.keys(data[0]);
+      var col = isWithOwner ? keys : keys.slice(0, 2);
+
       var table = document.createElement("table");
+      table.id = "rent_price";
       var tr = table.insertRow(-1);
       for (var i = 0; i < col.length; i++) {
         var th = document.createElement("th");
@@ -362,22 +354,26 @@
       tr = table.insertRow(-1);
       for (var j = 0; j < col.length; j++) {
         var tabCell = tr.insertCell(-1);
+        var column = col[j];
         tabCell.innerHTML =
-          col[j] == "date" ? "Rental fee" : data.map((x) => x.price).reduce((a, b) => a + b, 0);
+          column == "date"
+            ? "Rental fee"
+            : column == "price"
+            ? data.map((x) => x.price).reduce((a, b) => a + b, 0)
+            : "";
       }
-
-      var divContainer = document.getElementById("showData");
-      divContainer.innerHTML = "";
-      divContainer.appendChild(table);
+      $(".daterangepicker").append(table);
     }
 
     function clearTable() {
-      var divContainer = document.getElementById("showData");
-      divContainer.innerHTML = "";
+      var divContainer = document.getElementById("rent_price");
+      divContainer && divContainer.remove();
     }
 
     function capitalizeFirstLetter(string) {
-      return string.charAt(0).toUpperCase() + string.slice(1);
+      var split = string.split("_");
+      var newSyting = split.join(" ");
+      return newSyting.charAt(0).toUpperCase() + newSyting.slice(1);
     }
   })();
 </script>
