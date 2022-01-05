@@ -2,6 +2,7 @@
 using Microsoft.Xrm.Sdk.Query;
 using Newtonsoft.Json;
 using SoftLine.ActionPlugins.Dto;
+using SoftLine.ActionPlugins.OptionSets;
 using System;
 using System.Collections.Generic;
 using System.Linq;
@@ -73,11 +74,14 @@ namespace SoftLine.ActionPlugins
                  });
 
 
-                var rentPrice = new RentPrice(date, price.Value)
+                var rentPrice = new RentPrice(date, price.Value);
+                var rentStatuscode = shortRent?.GetAttributeValue<AliasedValue>("shortRent.sl_st_rent_statuscode")?.Value as OptionSetValue;
+                if (rentStatuscode?.Value == (int)ShortRentSTRentSstatus.Reserved)
                 {
-                    Employee = (shortRent?.GetAttributeValue<AliasedValue>("shortRent.ownerid")?.Value as EntityReference)?.Name,
-                    ExistingReservation = (shortRent?.GetAttributeValue<AliasedValue>("shortRent.sl_opportunityid")?.Value as EntityReference)?.Name,
-                };
+                    rentPrice.Employee = (shortRent?.GetAttributeValue<AliasedValue>("opportunity.ownerid")?.Value as EntityReference)?.Name;
+                    rentPrice.ExistingReservation = (shortRent?.GetAttributeValue<AliasedValue>("shortRent.sl_opportunityid")?.Value as EntityReference)?.Name;
+                }
+
                 ranges.Add(rentPrice);
             }
             return ranges;
@@ -102,7 +106,8 @@ namespace SoftLine.ActionPlugins
                              </link-entity>
                              <link-entity name='sl_unit' from='sl_unitid' to='sl_unitid' link-type='outer' alias='ae' >
                                <link-entity name='sl_short_rent_available' from='sl_property' to='sl_unitid' link-type='outer' alias='shortRent' >
-                                 <attribute name='sl_opportunityid' />
+                                 <attribute name='sl_opportunityid' /> 
+                                 <attribute name='sl_st_rent_statuscode' />
                                  <attribute name='ownerid' />
                                  <attribute name='sl_date_from' />
                                  <attribute name='sl_date_to' />
@@ -110,6 +115,9 @@ namespace SoftLine.ActionPlugins
                                    <condition attribute='sl_date_to' operator='on-or-after' value='{startDate:yyyy-MM-dd}' />
                                    <condition attribute='sl_date_from' operator='on-or-before' value='{endDate:yyyy-MM-dd}' />
                                  </filter>
+                                 <link-entity name='opportunity' from='opportunityid' to='sl_opportunityid' link-type='outer' alias='opportunity' >
+                                   <attribute name='ownerid' />
+                                 </link-entity>
                                </link-entity>
                              </link-entity>
                            </entity>

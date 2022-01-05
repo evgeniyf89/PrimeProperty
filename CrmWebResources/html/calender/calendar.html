@@ -158,9 +158,9 @@
       },
       checkDatesClick
     );
-    async function checkDatesClick(start, end, label) {
+    async function checkDatesClick(start, end) {
       clearTable();
-      var isCheck = await checkDates(start, end, label);
+      var isCheck = await checkDates(start, end);
       if (!isCheck) return;
       var data = await retrivePrice(start, end);
       createTableFromJSON(data);
@@ -190,13 +190,13 @@
 
     async function reserveOrRentProperty(start, end, status) {
       _xrm.Utility.showProgressIndicator("Loading");
-      var isCheck = await checkDates(start, end);
+      var isCheck = await checkDates(start, end, true);
       if (!isCheck) {
         _xrm.Utility.closeProgressIndicator();
         return;
       }
       var logicalName = "sl_property_for_opportunity";
-      var id = _inputParameter.propertyOppid;
+      var id = _inputParameter.propertyoppid;
       var request = {
         data: {
           "@odata.type": `Microsoft.Dynamics.CRM.${logicalName}`,
@@ -242,7 +242,7 @@
       }
     }
 
-    async function checkDates(start, end, label) {
+    async function checkDates(start, end, withRented) {
       start = start.startOf("day");
       end = end.startOf("day");
       var shortrent = await getShortRent(start, end);
@@ -253,6 +253,7 @@
         _xrm.Utility.alertDialog(`The number of rental days is too small.`);
         return;
       }
+      if (!withRented) return true;
       var checkFunc = (x) => {
         var from = new moment(x.dateFrom);
         var to = new moment(x.dateTo);
@@ -262,17 +263,6 @@
           (start <= from && end >= to)
         );
       };
-      var reservedByOpportunity =
-        shortrent.reservedByOpportunity && shortrent.reservedByOpportunity.find(checkFunc);
-      if (reservedByOpportunity) {
-        _xrm.Utility.alertDialog(`Dates are not available for selection`);
-        return;
-      }
-      /*var reserved = shortrent.reserved && shortrent.reserved.find(checkFunc);
-      if (reserved) {
-        _xrm.Utility.alertDialog(`Dates are not available for selection`);
-        return;
-      }*/
 
       var rentedByOpportunity =
         shortrent.rentedByOpportunity && shortrent.rentedByOpportunity.find(checkFunc);
@@ -281,11 +271,6 @@
         return;
       }
       return true;
-      /*var rented = shortrent.rented && shortrent.rented.find(checkFunc);
-      if (rented) {
-        _xrm.Utility.alertDialog(`Dates are not available for selection `);
-        return;
-      }*/
     }
 
     async function retrivePrice(startDate, endDate) {
