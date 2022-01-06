@@ -36,7 +36,7 @@ namespace SoftLine.ActionPlugins.Tests
             var crmSoap = "https://ppcrm1.api.crm4.dynamics.com/XRMServices/2011/Organization.svc";
             var uri = new Uri(crmSoap);
             var credentials = new ClientCredentials();
-            credentials.UserName.Password = "Nhgb432!";
+            credentials.UserName.Password = "SuperMuper!!";
             credentials.UserName.UserName = "test.crm@prime-property.com";
             ServicePointManager.SecurityProtocol = System.Net.SecurityProtocolType.Tls12;
             _service = new OrganizationServiceProxy(uri, null, credentials, null);
@@ -266,7 +266,7 @@ namespace SoftLine.ActionPlugins.Tests
         [TestMethod()]
         public void ReserveOrRentProperty()
         {
-            var data = new EntityReference("sl_property_for_opportunity", new Guid("{9D6AF515-B044-EC11-8C62-6045BD8D28F3}"));
+            var data = new EntityReference("sl_property_for_opportunity", new Guid("{9d6af515-b044-ec11-8c62-6045bd8d28f3}"));
             
             var startDate = new DateTime(2022, 02, 1);
             var endDate = new DateTime(2022, 02, 12);
@@ -305,18 +305,17 @@ namespace SoftLine.ActionPlugins.Tests
             var rentPrices = priceLogic.RetriveRentPrice(listing, from, to, _service);
             var rentPricesObj = priceLogic.Map(from, to, rentPrices);
             var rentalFree = rentPricesObj.Sum(x => x.Price);
-
-            var reserved = obj.Reserved.FirstOrDefault();
+            var shortRentAvailable = reserveOrRentProperty.RetriveShortRentAvailable(propertyOpportunity, _service);
             string message;
-            if (reserved != default)
+            if (shortRentAvailable is null)
             {
-                reserveOrRentProperty.UpdateRentavailable(status, startDate, endDate, reserved.Id, _service);
-                message = "updated";
+                reserveOrRentProperty.CreateRentavailable(status, startDate, endDate, propertyOpportunity, _service);
+                message = "created";
             }
             else
             {
-                var rentavailable = reserveOrRentProperty.CreateRentavailable(status, startDate, endDate, propertyOpportunity, _service);
-                message = "created";
+                reserveOrRentProperty.UpdateRentavailable(status, startDate, endDate, shortRentAvailable.Id, _service);
+                message = "updated";
             }
             reserveOrRentProperty.UpdateOpportynity(status, startDate, endDate, opportunityRef, _service);
             reserveOrRentProperty.UpdatePropertyOpportunity(status, startDate, endDate, rentalFree, data, _service);

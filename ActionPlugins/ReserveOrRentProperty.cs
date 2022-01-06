@@ -17,7 +17,7 @@ namespace SoftLine.ActionPlugins
             var context = (IPluginExecutionContext)serviceProvider.GetService(typeof(IPluginExecutionContext));
 
             var input = context.InputParameters;
-            var data = input["data"] as EntityReference;
+            var propertyForOpportunityRef = input["data"] as EntityReference;
             var startDateStr = input["startDate"] as string;
             var endDateStr = input["endDate"] as string;
             var statusStr = input["status"] as string;
@@ -31,7 +31,7 @@ namespace SoftLine.ActionPlugins
             var userService = serviceFactory.CreateOrganizationService(context.UserId);
 
 
-            var propertyOpportunity = RetrivePropertyOpportunity(data, systemService);
+            var propertyOpportunity = RetrivePropertyOpportunity(propertyForOpportunityRef, systemService);
             var listing = propertyOpportunity.GetAttributeValue<EntityReference>("sl_listingid");
             var opportunityRef = propertyOpportunity.GetAttributeValue<EntityReference>("sl_opportunityid");
             var propertyRef = propertyOpportunity.GetAttributeValue<EntityReference>("sl_propertyid");
@@ -50,7 +50,7 @@ namespace SoftLine.ActionPlugins
                 context.OutputParameters["responce"] = JsonConvert.SerializeObject(new { IsError = true, Message = $"The number of rental days is too small." });
                 return;
             };
-            
+
             if (listing is null)
             {
                 context.OutputParameters["responce"] = JsonConvert.SerializeObject(new { IsError = true, Message = $"listing is empty" });
@@ -62,21 +62,20 @@ namespace SoftLine.ActionPlugins
             var rentPrices = priceLogic.RetriveRentPrice(listing, from, to, systemService);
             var rentPricesObj = priceLogic.Map(from, to, rentPrices);
             var rentalFree = rentPricesObj.Sum(x => x.Price);
-            
-            var reserved = obj.Reserved.FirstOrDefault();          
+            var shortRentAvailable = RetriveShortRentAvailable(propertyOpportunity, systemService);
             string message;
-            if (reserved != default)
-            {                
-                UpdateRentavailable(status, startDate, endDate, reserved.Id, userService);
-                message = "updated";
+            if (shortRentAvailable is null)
+            {
+                CreateRentavailable(status, startDate, endDate, propertyOpportunity, userService);
+                message = "created";
             }
             else
             {
-                var rentavailable = CreateRentavailable(status, startDate, endDate, propertyOpportunity, userService);               
-                message = "created";               
-            }
+                UpdateRentavailable(status, startDate, endDate, shortRentAvailable.Id, userService);
+                message = "updated";
+            }          
             UpdateOpportynity(status, startDate, endDate, opportunityRef, userService);
-            UpdatePropertyOpportunity(status, startDate, endDate, rentalFree, data, userService);
+            UpdatePropertyOpportunity(status, startDate, endDate, rentalFree, propertyForOpportunityRef, userService);
             context.OutputParameters["responce"] = JsonConvert.SerializeObject(new { IsError = false, Message = $"Short rent available {message}" });
         }
 
@@ -133,8 +132,26 @@ namespace SoftLine.ActionPlugins
         }
 
         public Entity RetrivePropertyOpportunity(EntityReference propertyForOpportunityRef, IOrganizationService systemService)
-        {
+        {            
             return systemService.Retrieve(propertyForOpportunityRef.LogicalName, propertyForOpportunityRef.Id, new ColumnSet("sl_opportunityid", "sl_listingid", "sl_propertyid"));
+        }
+
+        public Entity RetriveShortRentAvailable(Entity propertyForOpportunity, IOrganizationService systemService)
+        {
+            var opportunityRef = propertyForOpportunity.GetAttributeValue<EntityReference>("sl_opportunityid");
+            var propertyRef = propertyForOpportunity.GetAttributeValue<EntityReference>("sl_propertyid");
+            if (opportunityRef is null || propertyRef is null) return default;
+            var query = $@"<fetch top='1' no-lock='true' >
+                          <entity name='sl_short_rent_available' >
+                            <attribute name='sl_short_rent_availableid' />
+                            <filter type='and' >
+                              <condition attribute='sl_opportunityid' operator='eq' value='{opportunityRef.Id}' />
+                              <condition attribute='sl_property' operator='eq' value='{propertyRef.Id}' />
+                              <condition attribute='sl_property_for_opportunityid' operator='eq' value='{propertyForOpportunity.Id}' />
+                            </filter>
+                          </entity>
+                        </fetch>";
+            return systemService.RetrieveMultiple(new FetchExpression(query)).Entities.FirstOrDefault();
         }
     }
 }
