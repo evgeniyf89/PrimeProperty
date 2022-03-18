@@ -389,6 +389,35 @@ Softline.Unit.Buttons = {
             fctx.data.entity.save();
             Xrm.Utility.alertDialog("Coordinates saved");
         },
+    },
+    Calendar: {
+        command: (fctx) => {
+            const isDirty = fctx.data.entity.getIsDirty();
+            const id = fctx.data.entity.getId();
+            if (!id || isDirty) {
+                Xrm.Navigation.openAlertDialog("Save the card.", { height: 120, width: 120 });
+                return;
+            }
+            const logicalname = fctx.data.entity.getEntityName(); 
+            const name = fctx.getAttribute("sl_name")?.getValue();
+            const pageInput = {
+                pageType: "webresource",
+                webresourceName: "sl_calendar.html",
+                data: `${id}&logicalname=${logicalname}&name=${name}`,
+            };
+            const navigationOptions = {
+                target: 2,
+                height: 550,
+                width: 850,             
+                position: 1,
+                title: "Calendar",
+            };
+            const successCallback = () => fctx.data.refresh()
+            Xrm.Navigation.navigateTo(pageInput, navigationOptions).then(successCallback);
+        },
+        enable:  (fctx) => {           
+            return true;
+        },
     }
 };
 

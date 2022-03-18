@@ -14,7 +14,13 @@ C:\Users\Fedotoveni\source\repos\PrimePropertyGroup\ActionPlugins\bin\Debug\Newt
 C:\Users\Fedotoveni\source\repos\PrimePropertyGroup\ActionPlugins\bin\Debug\Microsoft.Crm.Sdk.Proxy.xml
 C:\Users\Fedotoveni\source\repos\PrimePropertyGroup\ActionPlugins\bin\Debug\Microsoft.Xrm.Sdk.xml
 C:\Users\Fedotoveni\source\repos\PrimePropertyGroup\ActionPlugins\bin\Debug\Newtonsoft.Json.xml
-C:\Users\Fedotoveni\source\repos\PrimePropertyGroup\ActionPlugins\obj\Debug\SoftLine.ActionPlugins.csproj.AssemblyReference.cache
 C:\Users\Fedotoveni\source\repos\PrimePropertyGroup\ActionPlugins\obj\Debug\SoftLine.ActionPlugins.csproj.CopyComplete
 C:\Users\Fedotoveni\source\repos\PrimePropertyGroup\ActionPlugins\obj\Debug\ActionPlugins.dll
 C:\Users\Fedotoveni\source\repos\PrimePropertyGroup\ActionPlugins\obj\Debug\ActionPlugins.pdb
+C:\Users\Fedotoveni\source\repos\PrimePropertyGroup\ActionPlugins\bin\Debug\DocumentFormat.OpenXml.dll
+C:\Users\Fedotoveni\source\repos\PrimePropertyGroup\ActionPlugins\bin\Debug\DocumentFormat.OpenXml.xml
+C:\Users\Fedotoveni\source\repos\PrimePropertyGroup\ActionPlugins\obj\Debug\SoftLine.ActionPlugins.csproj.ResolveComReference.cache
+C:\Users\Fedotoveni\source\repos\PrimePropertyGroup\ActionPlugins\bin\Debug\System.IO.Packaging.dll
+C:\Users\Fedotoveni\source\repos\PrimePropertyGroup\ActionPlugins\bin\Debug\HtmlAgilityPack.dll
+C:\Users\Fedotoveni\source\repos\PrimePropertyGroup\ActionPlugins\bin\Debug\HtmlAgilityPack.pdb
+C:\Users\Fedotoveni\source\repos\PrimePropertyGroup\ActionPlugins\bin\Debug\HtmlAgilityPack.xml

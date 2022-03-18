@@ -63,6 +63,12 @@ namespace SoftLine.ActionPlugins
             var rentPricesObj = priceLogic.Map(from, to, rentPrices);
             var rentalFree = rentPricesObj.Sum(x => x.Price);
             var shortRentAvailable = RetriveShortRentAvailable(propertyOpportunity, systemService);
+            var rentStatuscode = shortRentAvailable?.GetAttributeValue<OptionSetValue>("sl_st_rent_statuscode")?.Value;
+            if (shortRentAvailable != null && rentStatuscode != (int)ShortRentSTRentSstatus.Reserved)
+            {
+                context.OutputParameters["responce"] = JsonConvert.SerializeObject(new { IsError = true, Message = $"There is already a rental for the dates you enter." });
+                return;
+            }
             string message;
             if (shortRentAvailable is null)
             {
@@ -73,7 +79,7 @@ namespace SoftLine.ActionPlugins
             {
                 UpdateRentavailable(status, startDate, endDate, shortRentAvailable.Id, userService);
                 message = "updated";
-            }          
+            }
             UpdateOpportynity(status, startDate, endDate, opportunityRef, userService);
             UpdatePropertyOpportunity(status, startDate, endDate, rentalFree, propertyForOpportunityRef, userService);
             context.OutputParameters["responce"] = JsonConvert.SerializeObject(new { IsError = false, Message = $"Short rent available {message}" });
@@ -132,7 +138,7 @@ namespace SoftLine.ActionPlugins
         }
 
         public Entity RetrivePropertyOpportunity(EntityReference propertyForOpportunityRef, IOrganizationService systemService)
-        {            
+        {
             return systemService.Retrieve(propertyForOpportunityRef.LogicalName, propertyForOpportunityRef.Id, new ColumnSet("sl_opportunityid", "sl_listingid", "sl_propertyid"));
         }
 
@@ -143,11 +149,10 @@ namespace SoftLine.ActionPlugins
             if (opportunityRef is null || propertyRef is null) return default;
             var query = $@"<fetch top='1' no-lock='true' >
                           <entity name='sl_short_rent_available' >
-                            <attribute name='sl_short_rent_availableid' />
+                           <attribute name='sl_st_rent_statuscode' /> 
                             <filter type='and' >
                               <condition attribute='sl_opportunityid' operator='eq' value='{opportunityRef.Id}' />
                               <condition attribute='sl_property' operator='eq' value='{propertyRef.Id}' />
-                              <condition attribute='sl_property_for_opportunityid' operator='eq' value='{propertyForOpportunity.Id}' />
                             </filter>
                           </entity>
                         </fetch>";

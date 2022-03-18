@@ -55,6 +55,7 @@
         this.autoUpdateInput = true;
         this.alwaysShowCalendars = false;
         this.ranges = {};
+        this.rentedBtnBlock = options.isRentedBtnBlock;
 
         this.opens = 'right';
         if (this.element.hasClass('pull-right'))
@@ -1023,6 +1024,7 @@
                            '<button class="cancelBtn" type="button"></button>' +
                            '<button class="applyBtn" disabled="disabled" type="button"></button> ' +
             */
+            
             if (this.singleDatePicker || (this.endDate && (this.startDate.isBefore(this.endDate) || this.startDate.isSame(this.endDate)))) {
                 this.container.find('button.applyBtn').prop('disabled', false);
                 this.container.find('button.rentedBtn').prop('disabled', false);
@@ -1032,7 +1034,9 @@
                 this.container.find('button.rentedBtn').prop('disabled', true);
                 this.container.find('button.cancelBtn').prop('disabled', true);
             }
-
+            if (this.rentedBtnBlock){
+                this.container.find('button.rentedBtn').prop('disabled', true);
+            }
         },
 
         move: function () {

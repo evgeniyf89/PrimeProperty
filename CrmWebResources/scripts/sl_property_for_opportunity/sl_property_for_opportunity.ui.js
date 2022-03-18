@@ -9,16 +9,11 @@ Softline.PropertyForOpportunity.Buttons = {
                 Xrm.Navigation.openAlertDialog("Save the card.", { height: 120, width: 120 });
                 return;
             }
-            const listingid = fctx.getAttribute("sl_listingid")?.getValue()[0].id ?? '';
-            const propertyRef = fctx.getAttribute("sl_propertyid")?.getValue()[0];
-            const opportunityid = fctx.getAttribute("sl_opportunityid")?.getValue()[0].id ?? '';
-            const start = fctx.getAttribute("sl_date_from").getValue()?.format("yyyy.MM.dd") ?? '';
-            const end = fctx.getAttribute("sl_date_to").getValue()?.format("yyyy.MM.dd") ?? '';           
-
+            const logicalname = fctx.data.entity.getEntityName(); 
             const pageInput = {
                 pageType: "webresource",
                 webresourceName: "sl_calendar.html",
-                data: `${propertyRef.id}&logicalname=${propertyRef.entityType}&opportunityid=${opportunityid}&listingid=${listingid}&start=${start}&end=${end}&propertyOppid=${id}`,
+                data: `${id}&logicalname=${logicalname}`,
             };
             const navigationOptions = {
                 target: 2,

@@ -306,6 +306,12 @@ namespace SoftLine.ActionPlugins.Tests
             var rentPricesObj = priceLogic.Map(from, to, rentPrices);
             var rentalFree = rentPricesObj.Sum(x => x.Price);
             var shortRentAvailable = reserveOrRentProperty.RetriveShortRentAvailable(propertyOpportunity, _service);
+            var rentStatuscode = shortRentAvailable?.GetAttributeValue<OptionSetValue>("sl_st_rent_statuscode")?.Value;
+            if (shortRentAvailable != null && rentStatuscode != (int)ShortRentSTRentSstatus.Reserved)
+            {
+                throw new Exception(JsonConvert.SerializeObject(new { IsError = true, Message = $"There is already a rental for the dates you enter." }));
+                return;
+            }
             string message;
             if (shortRentAvailable is null)
             {
