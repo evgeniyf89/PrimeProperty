@@ -24,3 +24,4 @@ C:\Users\Fedotoveni\source\repos\PrimePropertyGroup\ActionPlugins\bin\Debug\Syst
 C:\Users\Fedotoveni\source\repos\PrimePropertyGroup\ActionPlugins\bin\Debug\HtmlAgilityPack.dll
 C:\Users\Fedotoveni\source\repos\PrimePropertyGroup\ActionPlugins\bin\Debug\HtmlAgilityPack.pdb
 C:\Users\Fedotoveni\source\repos\PrimePropertyGroup\ActionPlugins\bin\Debug\HtmlAgilityPack.xml
+C:\Users\Fedotoveni\source\repos\PrimePropertyGroup\ActionPlugins\obj\Debug\SoftLine.ActionPlugins.csproj.AssemblyReference.cache

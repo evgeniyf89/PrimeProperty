@@ -13,31 +13,52 @@ using PIC = DocumentFormat.OpenXml.Drawing.Pictures;
 using A14 = DocumentFormat.OpenXml.Office2010.Drawing;
 using Wp14 = DocumentFormat.OpenXml.Office2010.Word.Drawing;
 using HtmlAgilityPack;
+using Microsoft.Xrm.Sdk;
+using SoftLine.ActionPlugins.Word_Template_Constructor;
+using SoftLine.ActionPlugins.Model;
+using SoftLine.ActionPlugins.SharePoint;
 
 namespace SoftLine.ActionPlugins
 {
-    public class CreatePrintedForm
+    public class CreatePrintedForm : IPlugin
     {
+        public void Execute(IServiceProvider serviceProvider)
+        {
+            var context = (IPluginExecutionContext)serviceProvider.GetService(typeof(IPluginExecutionContext));
+            var serviceFactory = (IOrganizationServiceFactory)serviceProvider.GetService(typeof(IOrganizationServiceFactory));
+            var service = serviceFactory.CreateOrganizationService(null);
+            
+        }
+
+        public PrintFormSettings GetPrintFormSettings(IOrganizationService service)
+        {
+            var parameterConstructor = new ParametersContstructor(service);
+            return parameterConstructor.GetPrintFormSettings(1);
+        }
+
+        public byte[] GetFileByAbsoluteUrl(string url, IOrganizationService service)
+        {
+            var uri = new Uri(url);
+            var basePath = uri.GetLeftPart(UriPartial.Authority);
+            var credintals = Helper.GetСredentialsForSp(service);
+            using (var spClient = new SharePointClient(basePath, credintals))
+            {
+                return spClient.GetFileByAbsoluteUrl(url);
+            }
+        }
+
         public void RetrivePrintedForm()
         {
-            var path = @"E:\Аренда прайслист разметка.docx";
+            var path = @"E:\Project price bbf.docx";
             var imageFilename = @"C:\Users\Fedotoveni\Desktop\фото 1.jpg";
             byte[] byteArray = File.ReadAllBytes(path);
             var nameValues = new Dictionary<string, object>()
             {
-                ["Номер"] = "702-1A",
-                ["Пк"] = 10479,
-                ["Этаж"] = 7,
-                ["КонецСтроительства"] = DateTime.Now,
-                ["КолвоСпален"] = 2,
-                ["КолвоПарковок"] = 1,
-                ["ВнутренПлощадь"] = 124.7,
-                ["КрВерандаПлощадь"] = 31.3,
-                ["ОткрВерандаПлощадь"] = 134.1,
-                ["УчастокПлощадь"] = 0.0,
-                ["ОбщаяПолзовПлощадь"] = 6.4,
-                ["ОбщаяПлощадь"] = 296.4,
-                ["РастояниеДоМоря"] = 200
+                ["Проект"] = "(OUT OF MARKET) Kissos Elite",
+                ["Город"] = "Paphos",
+                ["Район"] = "Kissonerga",
+                ["Стадия"] = "Planned",
+                ["ДоМоря"] = "20"               
             };
             using (var templateStream = new MemoryStream())
             {
@@ -45,20 +66,20 @@ namespace SoftLine.ActionPlugins
                 using (var word = WordprocessingDocument.Open(templateStream, true))
                 {
                     ProcessDocumentVariables(word, nameValues);
-                    var imagePart = word.MainDocumentPart.AddImagePart(ImagePartType.Jpeg);
-                    using (FileStream stream = new FileStream(imageFilename, FileMode.Open))
-                    {
-                        imagePart.FeedData(stream);
-                    }
-                    var bookmarkStarts = word.MainDocumentPart.RootElement.Descendants<BookmarkStart>().ToArray();
-                    var relationshipId = word.MainDocumentPart.GetIdOfPart(imagePart);
-                    foreach (var bookmarkStart in bookmarkStarts.Where(x => x.Name == "Image"))
-                    {
-                        GenerateDrawing(relationshipId, bookmarkStart);
-                        bookmarkStart.Remove();
-                    }
+                    //var imagePart = word.MainDocumentPart.AddImagePart(ImagePartType.Jpeg);
+                    //using (FileStream stream = new FileStream(imageFilename, FileMode.Open))
+                    //{
+                    //    imagePart.FeedData(stream);
+                    //}
+                    //var bookmarkStarts = word.MainDocumentPart.RootElement.Descendants<BookmarkStart>().ToArray();
+                    //var relationshipId = word.MainDocumentPart.GetIdOfPart(imagePart);
+                    //foreach (var bookmarkStart in bookmarkStarts.Where(x => x.Name == "Image"))
+                    //{
+                    //    GenerateDrawing(relationshipId, bookmarkStart);
+                    //    bookmarkStart.Remove();
+                    //}
                 }
-                var savePath = @"E:\Аренда прайслист разметка c параметрами.docx";
+                var savePath = @"E:Project price bbf c параметрами.docx";
                 File.WriteAllBytes(savePath, templateStream.ToArray());
             }
 
@@ -412,8 +433,8 @@ namespace SoftLine.ActionPlugins
                     fieldsToCheck.Add(fieldName);
                 }
             }
-            if (fieldsToCheck.Count > 0)
-                throw new Exception("Для некоторых полей шаблона не найдены значения в CRM. Проверьте следующие параметры документов: " + String.Join(", ", fieldsToCheck));
+            //if (fieldsToCheck.Count > 0)
+            //    throw new Exception("Для некоторых полей шаблона не найдены значения в CRM. Проверьте следующие параметры документов: " + String.Join(", ", fieldsToCheck));
             #endregion
 
             #region Process document variables from values dictionary. Process document variables with format info.
@@ -879,5 +900,6 @@ namespace SoftLine.ActionPlugins
 
             return hundreds[HN] + (TN == 1 ? tens1P[DN] : tens[TN]) + (TN != 1 ? digits[value, DN] : string.Empty);
         }
+
     }
 }
