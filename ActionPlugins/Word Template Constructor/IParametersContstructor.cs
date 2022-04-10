@@ -5,10 +5,10 @@ using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
 
-namespace SoftLine.ActionPlugins.Word_Template_Constructor
+namespace SoftLine.ActionPlugins.WordTemplateConstructor
 {
     interface IParametersContstructor
     {
-        PrintFormSettings GetPrintFormSettings(int templateid);
+        PrintFormSettings GetPrintFormSettings(int templateid, Guid entityid, Guid languageId);
     }
 }

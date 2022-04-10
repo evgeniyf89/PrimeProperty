@@ -50,7 +50,7 @@ namespace SoftLine.ActionPlugins
         public void UploadDocument(Uri folderUri, Images images, EntityReference regardingobjectRef, IOrganizationService service)
         {
             var basePath = folderUri.GetLeftPart(UriPartial.Authority);
-            var credentials = Helper.GetСredentialsForSp(service);
+            var spData = Helper.GetInputDataForSp(service);
 
             byte[] getByteBase64(string base64)
             {
@@ -60,7 +60,7 @@ namespace SoftLine.ActionPlugins
             }
             using (var ctx = new ClientContext(basePath))
             {
-                ctx.Credentials = credentials;
+                ctx.Credentials = spData.Credentials;
                 var web = ctx.Web;
                 var folder = web.GetFolderByServerRelativeUrl($"{folderUri.AbsolutePath}");
                 ctx.Load(folder);

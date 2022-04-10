@@ -63,7 +63,7 @@ Softline.Subject.Buttons = {
                 const withWatermark = exclusivebit && !exclusivebit.getValue() ? true : false;
                 const WATERMARK = "/WebResources/sl_watermark_big.png"
                 const postData = [];
-                
+
                 const groupFormats = updateFormatButton.groupBy(allFormats, "sl_type@OData.Community.Display.V1.FormattedValue");
                 for (let key in groupFormats) {
                     const formatsByName = groupFormats[key];
@@ -390,5 +390,82 @@ Softline.Subject.Buttons = {
             fctx.data.entity.save();
             Xrm.Utility.alertDialog("Coordinates saved");
         },
+    },
+    PrintForm: {
+        command: async (fctx, ids) => {
+            debugger;
+            Xrm.Utility.showProgressIndicator("Loading");
+            const projectid = ids[0];
+            const request = Softline.Subject.Buttons.PrintForm.printFormRequest(projectid, 1);
+            const responce = await Xrm.WebApi.online.execute(request);
+            const json = await responce.json();
+            const data = JSON.parse(json.responce);
+            if (data.IsError) {
+                Xrm.Utility.closeProgressIndicator();
+                Xrm.Utility.alertDialog(data.Message);
+                return;
+            }
+            const byteArray = Softline.Subject.Buttons.PrintForm.base64ToArrayBuffer(data.File); 
+            Xrm.Utility.closeProgressIndicator();          
+            Softline.Subject.Buttons.PrintForm.download(byteArray, data.FileName, "application/msword");
+        },
+        enable: fctx => {
+            return true;
+        },
+
+        download: (data, filename, type) => {
+            var file = new Blob([data], { type: type });
+            if (window.navigator.msSaveOrOpenBlob)
+                window.navigator.msSaveOrOpenBlob(file, filename);
+            else {
+                var a = document.createElement("a"),
+                    url = URL.createObjectURL(file);
+                a.href = url;
+                a.download = filename;
+                document.body.appendChild(a);
+                a.click();
+                setTimeout(function () {
+                    document.body.removeChild(a);
+                    window.URL.revokeObjectURL(url);
+                }, 0);
+            }
+        },
+
+        base64ToArrayBuffer: (base64) => {
+            const binaryString = window.atob(base64);
+            const len = binaryString.length;
+            const bytes = new Uint8Array(len);
+            for (let i = 0; i < len; i++) {
+                bytes[i] = binaryString.charCodeAt(i);
+            }
+            return bytes.buffer;
+        },
+
+        printFormRequest: (projectid, templateid) => {
+            return {
+                data: {
+                    "@odata.type": `Microsoft.Dynamics.CRM.sl_project`,
+                    [`sl_projectid`]: projectid,
+                },
+                templateid: templateid,
+                getMetadata: function () {
+                    return {
+                        boundParameter: null,
+                        parameterTypes: {
+                            templateid: {
+                                typeName: "Edm.Int",
+                                structuralProperty: 1,
+                            },
+                            data: {
+                                typeName: `sl_project`,
+                                structuralProperty: 5,
+                            },
+                        },
+                        operationType: 0,
+                        operationName: "sl_get_print_form",
+                    };
+                },
+            };
+        }
     }
 }

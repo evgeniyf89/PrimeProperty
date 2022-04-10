@@ -1,9 +1,9 @@
 ﻿using Microsoft.VisualStudio.TestTools.UnitTesting;
 using Microsoft.Xrm.Sdk;
 using Microsoft.Xrm.Sdk.Client;
-using SoftLine.ActionPlugins;
 using System;
 using System.Collections.Generic;
+using System.IO;
 using System.Linq;
 using System.Net;
 using System.ServiceModel.Description;
@@ -33,28 +33,20 @@ namespace SoftLine.ActionPlugins.Tests
         public void RetrivePrintedFormTest()
         {
 
-            _printedForm.RetrivePrintedForm();
-        }
-
-        [TestMethod()]
-        public void RenderHtmlToPdfTest()
-        {
-            _printedForm.RenderHtmlToPdf();
         }
 
         [TestMethod()]
         public void GetPrintFormSettingsTest()
         {
-            var settings = _printedForm.GetPrintFormSettings(_service);
-            var isValid = settings.ValidData(out string message);
+
         }
 
         [TestMethod()]
         public void GetFileByAbsoluteUrlTest()
         {
-            var settings = _printedForm.GetPrintFormSettings(_service);
-            var url = $"{settings.TemplateFolderInSharePoint}/{settings.TemplateNameInSharePoint}";
-            var bytes = _printedForm.GetFileByAbsoluteUrl(url, _service);
+            var settings = _printedForm.FormPrintForm(1, new Guid("db0468db-b773-ec11-8941-002248818536"), Guid.NewGuid(), _service);           
+            var savePath2 = @"E:Project price bbf c параметрами.docx";            
+           
         }
     }
 }

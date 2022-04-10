@@ -107,7 +107,7 @@ namespace SoftLine.ActionPlugins
             var images = new List<Images>();
             using (var ctx = new ClientContext(basePath))
             {
-                ctx.Credentials = Helper.GetСredentialsForSp(service);
+                ctx.Credentials = Helper.GetInputDataForSp(service).Credentials;
                 var web = ctx.Web;
                 var folderForDelete = new List<string>();
                 foreach (var gr in groupUrls)

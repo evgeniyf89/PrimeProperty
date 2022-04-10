@@ -148,7 +148,7 @@
   </ItemGroup>
   <ItemGroup>
     <ProjectReference Include="..\ActionPlugins\SoftLine.ActionPlugins.csproj">
-      <Project>{74C51EE8-4BEB-4E69-858E-E06BC48068B1}</Project>
+      <Project>{74c51ee8-4beb-4e69-858e-e06bc48068b1}</Project>
       <Name>SoftLine.ActionPlugins</Name>
     </ProjectReference>
     <ProjectReference Include="..\SofLine.Picture\SofLine.Picture.csproj">

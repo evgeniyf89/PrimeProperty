@@ -28,7 +28,6 @@ C:\Users\Fedotoveni\source\repos\PrimePropertyGroup\SoftLine.ActionPluginsTests\
 C:\Users\Fedotoveni\source\repos\PrimePropertyGroup\SoftLine.ActionPluginsTests\bin\Debug\Newtonsoft.Json.dll
 C:\Users\Fedotoveni\source\repos\PrimePropertyGroup\SoftLine.ActionPluginsTests\bin\Debug\SofLine.Picture.dll
 C:\Users\Fedotoveni\source\repos\PrimePropertyGroup\SoftLine.ActionPluginsTests\bin\Debug\ActionPlugins.pdb
-C:\Users\Fedotoveni\source\repos\PrimePropertyGroup\SoftLine.ActionPluginsTests\bin\Debug\ActionPlugins.dll.config
 C:\Users\Fedotoveni\source\repos\PrimePropertyGroup\SoftLine.ActionPluginsTests\bin\Debug\SofLine.Picture.pdb
 C:\Users\Fedotoveni\source\repos\PrimePropertyGroup\SoftLine.ActionPluginsTests\bin\Debug\Microsoft.Crm.Sdk.Proxy.xml
 C:\Users\Fedotoveni\source\repos\PrimePropertyGroup\SoftLine.ActionPluginsTests\bin\Debug\Microsoft.VisualStudio.TestPlatform.TestFramework.xml
@@ -45,9 +44,7 @@ C:\Users\Fedotoveni\source\repos\PrimePropertyGroup\SoftLine.ActionPluginsTests\
 C:\Users\Fedotoveni\source\repos\PrimePropertyGroup\SoftLine.ActionPluginsTests\bin\Debug\System.Security.Cryptography.Encoding.dll
 C:\Users\Fedotoveni\source\repos\PrimePropertyGroup\SoftLine.ActionPluginsTests\bin\Debug\System.Security.Cryptography.Primitives.dll
 C:\Users\Fedotoveni\source\repos\PrimePropertyGroup\SoftLine.ActionPluginsTests\bin\Debug\System.Security.Cryptography.X509Certificates.dll
-C:\Users\Fedotoveni\source\repos\PrimePropertyGroup\SoftLine.ActionPluginsTests\bin\Debug\DocumentFormat.OpenXml.dll
-C:\Users\Fedotoveni\source\repos\PrimePropertyGroup\SoftLine.ActionPluginsTests\bin\Debug\DocumentFormat.OpenXml.xml
 C:\Users\Fedotoveni\source\repos\PrimePropertyGroup\SoftLine.ActionPluginsTests\bin\Debug\SoftLine.ActionPluginsTests.dll.config
-C:\Users\Fedotoveni\source\repos\PrimePropertyGroup\SoftLine.ActionPluginsTests\bin\Debug\HtmlAgilityPack.dll
-C:\Users\Fedotoveni\source\repos\PrimePropertyGroup\SoftLine.ActionPluginsTests\bin\Debug\HtmlAgilityPack.pdb
-C:\Users\Fedotoveni\source\repos\PrimePropertyGroup\SoftLine.ActionPluginsTests\bin\Debug\HtmlAgilityPack.xml
+C:\Users\Fedotoveni\source\repos\PrimePropertyGroup\SoftLine.ActionPluginsTests\bin\Debug\DocumentFormat.OpenXml.dll
+C:\Users\Fedotoveni\source\repos\PrimePropertyGroup\SoftLine.ActionPluginsTests\bin\Debug\ActionPlugins.dll.config
+C:\Users\Fedotoveni\source\repos\PrimePropertyGroup\SoftLine.ActionPluginsTests\bin\Debug\DocumentFormat.OpenXml.xml

@@ -4,8 +4,6 @@ C:\Users\Fedotoveni\source\repos\PrimePropertyGroup\ActionPlugins\bin\Debug\Acti
 C:\Users\Fedotoveni\source\repos\PrimePropertyGroup\ActionPlugins\bin\Debug\ActionPlugins.pdb
 C:\Users\Fedotoveni\source\repos\PrimePropertyGroup\ActionPlugins\bin\Debug\Microsoft.Crm.Sdk.Proxy.dll
 C:\Users\Fedotoveni\source\repos\PrimePropertyGroup\ActionPlugins\bin\Debug\Microsoft.CSharp.dll
-C:\Users\Fedotoveni\source\repos\PrimePropertyGroup\ActionPlugins\bin\Debug\Microsoft.Office.Client.Policy.dll
-C:\Users\Fedotoveni\source\repos\PrimePropertyGroup\ActionPlugins\bin\Debug\Microsoft.Office.Client.TranslationServices.dll
 C:\Users\Fedotoveni\source\repos\PrimePropertyGroup\ActionPlugins\bin\Debug\Microsoft.SharePoint.Client.dll
 C:\Users\Fedotoveni\source\repos\PrimePropertyGroup\ActionPlugins\bin\Debug\Microsoft.SharePoint.Client.DocumentManagement.dll
 C:\Users\Fedotoveni\source\repos\PrimePropertyGroup\ActionPlugins\bin\Debug\Microsoft.SharePoint.Client.Runtime.dll
@@ -19,9 +17,6 @@ C:\Users\Fedotoveni\source\repos\PrimePropertyGroup\ActionPlugins\obj\Debug\Acti
 C:\Users\Fedotoveni\source\repos\PrimePropertyGroup\ActionPlugins\obj\Debug\ActionPlugins.pdb
 C:\Users\Fedotoveni\source\repos\PrimePropertyGroup\ActionPlugins\bin\Debug\DocumentFormat.OpenXml.dll
 C:\Users\Fedotoveni\source\repos\PrimePropertyGroup\ActionPlugins\bin\Debug\DocumentFormat.OpenXml.xml
-C:\Users\Fedotoveni\source\repos\PrimePropertyGroup\ActionPlugins\obj\Debug\SoftLine.ActionPlugins.csproj.ResolveComReference.cache
 C:\Users\Fedotoveni\source\repos\PrimePropertyGroup\ActionPlugins\bin\Debug\System.IO.Packaging.dll
-C:\Users\Fedotoveni\source\repos\PrimePropertyGroup\ActionPlugins\bin\Debug\HtmlAgilityPack.dll
-C:\Users\Fedotoveni\source\repos\PrimePropertyGroup\ActionPlugins\bin\Debug\HtmlAgilityPack.pdb
-C:\Users\Fedotoveni\source\repos\PrimePropertyGroup\ActionPlugins\bin\Debug\HtmlAgilityPack.xml
+C:\Users\Fedotoveni\source\repos\PrimePropertyGroup\ActionPlugins\bin\Debug\System.IO.Packaging.xml
 C:\Users\Fedotoveni\source\repos\PrimePropertyGroup\ActionPlugins\obj\Debug\SoftLine.ActionPlugins.csproj.AssemblyReference.cache
