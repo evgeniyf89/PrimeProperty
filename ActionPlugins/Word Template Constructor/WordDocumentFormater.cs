@@ -15,11 +15,13 @@ using SoftLine.ActionPlugins.SharePoint;
 using System.IO;
 using DocumentFormat.OpenXml.Packaging;
 using DocumentFormat.OpenXml;
+using System.Xml.XPath;
+using System.Xml;
 
 namespace SoftLine.ActionPlugins.WordTemplateConstructor
 {
     public class WordDocumentFormater : IWordDocumentFormater
-    {     
+    {
 
         public byte[] Form(byte[] wordTemplate, PrintFormSettings settings)
         {
@@ -496,7 +498,7 @@ namespace SoftLine.ActionPlugins.WordTemplateConstructor
 
         private void AddDocumentVariable(DocumentVariables documentVariables, string variableName, object variableValue)
         {
-            DocumentVariable documentVariable = documentVariables.OfType<DocumentVariable>().FirstOrDefault(dv => dv.Name == variableName);
+            var documentVariable = documentVariables.OfType<DocumentVariable>().FirstOrDefault(dv => dv.Name == variableName);
 
             if (documentVariable == null)
             {
@@ -504,9 +506,25 @@ namespace SoftLine.ActionPlugins.WordTemplateConstructor
 
                 documentVariables.Append(documentVariable);
             }
+            if (variableName == "ОсновныеПреимущества")
+            {
+                var byteArray = Encoding.ASCII.GetBytes(variableValue as string);
+                var stream = new MemoryStream(byteArray);
 
-            documentVariable.Val = GetFormattedDocumentVariableValue(variableName, variableValue);
+                var htmlDoc = new XPathDocument(stream);
 
+                var navigator = htmlDoc.CreateNavigator();
+                var mngr = new XmlNamespaceManager(navigator.NameTable);
+                mngr.AddNamespace("xhtml", "http://www.w3.org/1999/xhtml");
+
+                var ni = navigator.Select("//xhtml:p", mngr);
+                while (ni.MoveNext())
+                {
+                    documentVariable.AppendChild(new Paragraph(new Run(new Text(ni.Current.Value))));
+                }
+            }
+            else
+                documentVariable.Val = GetFormattedDocumentVariableValue(variableName, variableValue);
         }
 
         private string GetFormattedDocumentVariableValue(string variableName, object sourceValue)
@@ -537,6 +555,35 @@ namespace SoftLine.ActionPlugins.WordTemplateConstructor
             return !string.IsNullOrEmpty(stringValue) ? stringValue : NULL_VARIABLE_VALUE;
         }
 
+        public void ConvertHTML(string htmlFileName, string docFileName)
+        {
+            // Create a Wordprocessing document. 
+            using (WordprocessingDocument package = WordprocessingDocument.Create(docFileName, WordprocessingDocumentType.Document))
+            {
+                // Add a new main document part. 
+                package.AddMainDocumentPart();
+
+                // Create the Document DOM. 
+                package.MainDocumentPart.Document = new Document(new Body());
+                Body body = package.MainDocumentPart.Document.Body;
+                var htmlText = "<ul class=\"ul-styled\"><li>landmark architecture from one of London’s leading architects;</li><li>500 meters from sandy beach and city amenities of Limassol’s tourist area;</li><li>sea views from floors 6 and 7;</li><li>extended hotel-type facilities: outdoor pool, half-Olympic size indoor heated pool, SPA, concierge, playroom, club house, underground parking, large outdoor gardens, gym, playground for kids;</li><li>penthouses with private pools;</li><li>apartments with private gardens;</li><li>spacious duplexes and triplexes serving as a good alternative to a villa;</li><li>high ceilings (3.15 m);</li><li>high standard finishes (parquet floors, high doors of 2.4 m, security entrance doors, thermal aluminum window frames, top standard in-built furniture, and sanitary ware);</li><li>water underfloor heating andVRV air conditioning.</li></ul>";
+                var byteArray = Encoding.ASCII.GetBytes(htmlText);
+                var stream = new MemoryStream(byteArray);
+
+                var htmlDoc = new XPathDocument(stream);
+
+                var navigator = htmlDoc.CreateNavigator();
+                var mngr = new XmlNamespaceManager(navigator.NameTable);
+                mngr.AddNamespace("xhtml", "http://www.w3.org/1999/xhtml");
+
+                var ni = navigator.Select("//xhtml:p", mngr);
+                while (ni.MoveNext())
+                {
+                    body.AppendChild(new Paragraph(new Run(new Text(ni.Current.Value))));
+                }
+                package.MainDocumentPart.Document.Save();
+            }
+        }
 
     }
 }

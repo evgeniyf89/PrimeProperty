@@ -31,7 +31,7 @@ namespace SoftLine.ActionPlugins
             }
         }
 
-        public object FormPrintForm(int templateid, Guid entityid, Guid languageId, IOrganizationService service)
+        public byte[] FormPrintForm(int templateid, Guid entityid, Guid languageId, IOrganizationService service)
         {
             var spData = Helper.GetInputDataForSp(service);
             using (var spClient = new SharePointClient(spData.Url, spData.Credentials))
@@ -43,8 +43,8 @@ namespace SoftLine.ActionPlugins
 
                 var templateWord = spClient.GetFileByAbsoluteUrl(url);
                 var wordFormater = new WordDocumentFormater();
-                var printForm = wordFormater.Form(templateWord, settings);
-                return new { IsError = false, FileName = settings.TemplateNameInSharePoint, File = Convert.ToBase64String(printForm) };
+                return wordFormater.Form(templateWord, settings);
+               // return new { IsError = false, FileName = settings.TemplateNameInSharePoint, File = Convert.ToBase64String(printForm) };
             }
         }
     }

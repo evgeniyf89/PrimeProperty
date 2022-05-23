@@ -44,9 +44,9 @@ namespace SoftLine.ActionPlugins.Tests
         [TestMethod()]
         public void GetFileByAbsoluteUrlTest()
         {
-            var settings = _printedForm.FormPrintForm(1, new Guid("db0468db-b773-ec11-8941-002248818536"), Guid.NewGuid(), _service);           
-            var savePath2 = @"E:Project price bbf c параметрами.docx";            
-           
+            var settings = _printedForm.FormPrintForm(1, new Guid("8c0768db-b773-ec11-8941-002248818536"), Guid.NewGuid(), _service);           
+            var savePath2 = @"E:Project price bbf c параметрами.docx";
+            File.WriteAllBytes(savePath2, settings);
         }
     }
 }
