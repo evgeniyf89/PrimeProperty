@@ -1,0 +1,117 @@
+﻿<!doctype html>
+<html>
+<style>
+    * {
+        box-sizing: border-box;
+    }
+
+    .myForm {
+        display: grid;
+        grid-template-areas:
+            "customer taxi"
+            "customer extras"
+            "pickup dropoff"
+            "instructions instructions"
+            "submit submit";
+        grid-template-columns: auto auto;
+        grid-template-rows: auto auto auto auto;
+        grid-gap: .8em .5em;
+        background: #eee;
+        padding: 1.2em;
+    }
+
+        .myForm textarea {
+            height: calc(100% - 1.5em);
+        }
+
+        .myForm button {
+            background: gray;
+            color: white;
+            padding: 1em;
+        }
+
+        .myForm input:not([type=radio]):not([type=checkbox]),
+        .myForm textarea,
+        .myForm select {
+            width: 100%;
+            border: 0;
+            padding: 1em;
+            margin: .5em 0;
+        }
+
+        .myForm label {
+            display: block;
+        }
+
+    fieldset {
+        border: 0;
+    }
+
+    #submit {
+        grid-area: submit;
+    }
+
+    input[type=checkbox] {
+        transform: scale(2);
+        margin: .8em;
+    }
+</style>
+<body onload="loadInputData()">
+    <form class="myForm">
+        <fieldset id="promotion_type">
+            <label for="promotion_type">Promotion type</label>
+            <select name="promotion_type" id="promotion_type">
+                <option value="" selected="selected">Select One</option>
+                <option value="office">Taxi Office</option>
+                <option value="town_hall">Town Hall</option>
+                <option value="telepathy">We'll Guess!</option>
+            </select>
+        </fieldset>
+
+        <fieldset id="language">
+            <label for="language ">Language </label>
+            <select name="language" id="language">                
+            </select>
+        </fieldset>
+
+        <fieldset id="market">
+            <label for="market">Market</label>
+            <select name="market" id="market">
+                <option value="486160000" selected="selected">General</option>
+                <option value="486160001">China</option>
+            </select>
+        </fieldset>
+
+        <fieldset id="with_logo  ">
+            <label for="with_logo">With logo ?</label>
+            <input name="html" type="checkbox" />
+        </fieldset>
+        <button id="submit">SUBMIT</button>
+    </form>
+    <script>
+        const fctx = parent.Xrm;
+        document.getElementsByClassName('myForm')[0].addEventListener(
+            'submit',
+            e => {
+                e.preventDefault();
+                alert('Nothing to see here.\nPlease move along.');
+            }
+        );
+        loadInputData = async () => {
+            const query = `?$select=sl_name,sl_code&$filter=statecode eq 0`;
+            const languagesPromise = fctx.WebApi.retrieveMultipleRecords("sl_language", query);
+            const responce = await Promise.all([languagesPromise]);
+            const languages = responce[0];
+            const languagesElem = document.getElementById("language");
+            languages.entities.forEach((l) => {
+                const option = document.createElement("option");
+                option.text = l.sl_name;
+                option.value = l.sl_code;
+                option.id = l.sl_languageid;
+                l.sl_code?.toUpperCase() === "EN" && option.selected = true;
+                languagesElem.add(option, 0);
+            });
+        }
+    </script>
+</body>
+</html>
