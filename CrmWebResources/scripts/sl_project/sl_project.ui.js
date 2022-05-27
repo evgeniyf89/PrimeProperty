@@ -408,81 +408,15 @@ Softline.Subject.Buttons = {
             //const byteArray = Softline.Subject.Buttons.PrintForm.base64ToArrayBuffer(data.File); 
             //Xrm.Utility.closeProgressIndicator();          
             //Softline.Subject.Buttons.PrintForm.download(byteArray, data.FileName, "application/msword");
-            const json = `{
-    "objectName": "sky",
-	"preview": "https://static.tildacdn.com/tild3830-3562-4865-b562-643637396531/view01_final.jpg",
-	"detailsLabel": "Details",
-	"details": {"City": "Limassol", "Area": "Potamos Germasogeias", "Completion": "Under construction", "Distance to sea": "300 m", "Prices from": "800,000 ˆ", "Completion date": "Jan 2021"},
-	"majorBenefitsLabel": "Major benefits",
-	"majorBenefits": "<ul style='padding-left: 0;'><li>landmark architecture from the leading London bureau;</li> <li>the only high-rise condominium of Limassol with no noise from the coastal road;</li><li>breathtaking unobstructed sea views;</li><li>hotel-style facilities: concierge, SPA, outdoor pool, heated indoor pool, gym, tennis court, green area, and underground parking;</li></ul>",
-	"websiteUrl": "bbf.com",
-	"phoneLabel": "T",
-	"phone": "+357 25 315 300",
-	"faxLabel": "F",
-	"fax": "+357 25 315 301",
-	"emailLabel": "E",
-	"email": "info@bbf.com",
-	"address": "28 Ambelakion Street, Germasogeia 4046 Limassol, Cyprus P.O. Box 70649, 3801 Limassol",
-	"tagline": "Build. Better. Future.",
-	"metadata": {
-		"withLogo": false,
-		"mainTableColumns": [
-			{"name":"¹","unit":false},
-			{"name":"IBP","unit":false},
-			{"name":"Floor","unit":false},
-			{"name":"Type","unit":false},
-			{"name":"Bedrooms","unit":false},
-			{"name":"Indoor area","unit":"sq. m."},
-			{"name":"Cov. veranda","unit":"sq. m."},
-			{"name":"Uncov. veranda","unit":"sq. m."},
-			{"name":"Roof terrace","unit":"sq. m."},
-			{"name":"Common area","unit":"sq. m."},
-			{"name":"Total area","unit":"sq. m."},
-			{"name":"Pool","unit":false},
-			{"name":"PRICE","unit":"ˆ"},
-			{"name":"VAT","unit":false}
-		]		
-	},
-    "mainTable": [{
-		"blockName": "Block A",
-		"flats": [
-					[
-						[ "¹ 101","","1","Appartment","2","75.6","18.7","0.0","0.0","10.5","104.7","Common","Sold","Yes"],
-						[ "¹ 101","","1","Appartment","2","75.6","18.7","0.0","0.0","10.5","104.7","Common","Sold","Yes"],
-						[ "¹ 101","","1","Appartment","2","75.6","18.7","0.0","0.0","10.5","104.7","Common","Sold","Yes"]
-					],
-					[
-						[ "¹ 101","","1","Appartment","2","75.6","18.7","0.0","0.0","10.5","104.7","Common","Sold","Yes"],
-						[ "¹ 101","","1","Appartment","2","75.6","18.7","0.0","0.0","10.5","104.7","Common","Sold","Yes"],
-						[ "¹ 101","","1","Appartment","2","75.6","18.7","0.0","0.0","10.5","104.7","Common","Sold","Yes"]
-					]
-				]
-	},
-	{
-		"blockName": "Block B",
-		"flats": [
-					[
-						[ "¹ 101","","1","Appartment","2","75.6","18.7","0.0","0.0","10.5","104.7","Common","Sold","Yes"],
-						[ "¹ 101","","1","Appartment","2","75.6","18.7","0.0","0.0","10.5","104.7","Common","Sold","Yes"],
-						[ "¹ 101","","1","Appartment","2","75.6","18.7","0.0","0.0","10.5","104.7","Common","Sold","Yes"]
-					],
-					[
-						[ "¹ 101","","1","Appartment","2","75.6","18.7","0.0","0.0","10.5","104.7","Common","Sold","Yes"],
-						[ "¹ 101","","1","Appartment","2","75.6","18.7","0.0","0.0","10.5","104.7","Common","Sold","Yes"],
-						[ "¹ 101","","1","Appartment","2","75.6","18.7","0.0","0.0","10.5","104.7","Common","Sold","Yes"]
-					]
-				]
-	}]
-}`
-            sessionStorage.setItem("dataPrintForm", JSON.stringify(json));
+                        
             const pageInput = {
                 pageType: "webresource",
-                webresourceName: "sl_/reports/Project.html",
+                webresourceName: "sl_projectPriceInputParameters.html",
             };
             const navigationOptions = {
                 target: 2,
-                height: { value: 80, unit: "%" },
-                width: { value: 70, unit: "%" },
+                height: { value: 45, unit: "%" },
+                width: { value: 50, unit: "%" },
                 position: 1,
                 title: 'Project'
             };

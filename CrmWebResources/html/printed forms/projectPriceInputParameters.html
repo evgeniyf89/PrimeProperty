@@ -1,0 +1,216 @@
+﻿<!DOCTYPE html>
+<html>
+  <style>
+    * {
+      box-sizing: border-box;
+    }
+
+    .myForm {
+      display: grid;
+      grid-template-areas:
+        "customer taxi"
+        "customer extras"
+        "pickup dropoff"
+        "instructions instructions"
+        "submit submit";
+      grid-template-columns: auto auto;
+      grid-template-rows: auto auto auto auto;
+      grid-gap: 0.8em 0.5em;
+      background: #eee;
+      padding: 1.2em;
+    }
+
+    .myForm textarea {
+      height: calc(100% - 1.5em);
+    }
+
+    .myForm button {
+      background: gray;
+      color: white;
+      padding: 1em;
+    }
+
+    .myForm input:not([type="radio"]):not([type="checkbox"]),
+    .myForm textarea,
+    .myForm select {
+      width: 100%;
+      border: 0;
+      padding: 1em;
+      margin: 0.5em 0;
+    }
+
+    .myForm label {
+      display: block;
+    }
+
+    fieldset {
+      border: 0;
+    }
+
+    #submit {
+      grid-area: submit;
+    }
+
+    input[type="checkbox"] {
+      transform: scale(2);
+      margin: 0.8em;
+    }
+  </style>
+  <body onload="loadInputData()">
+    <form class="myForm">
+      <fieldset>
+        <label for="promotion_type">Promotion type</label>
+        <select name="promotion_type" id="promotion_type"></select>
+      </fieldset>
+
+      <fieldset>
+        <label for="language ">Language </label>
+        <select name="language" id="language"></select>
+      </fieldset>
+
+      <fieldset>
+        <label for="market">Market</label>
+        <select name="market" id="market"></select>
+      </fieldset>
+
+      <fieldset>
+        <label for="with_logo">With logo ?</label>
+        <input name="html" type="checkbox" />
+      </fieldset>
+      <button id="submit">SUBMIT</button>
+    </form>
+    <script>
+      const fctx = parent.Xrm;
+
+      document.getElementsByClassName("myForm")[0].addEventListener("submit", (e) => {
+        e.preventDefault();
+        fctx.Navigation.navigateBack();           
+            const pageInput = {
+                pageType: "webresource",
+                webresourceName: "sl_/reports/Project.html",
+            };
+            const navigationOptions = {
+                target: 2,
+                height: { value: 80, unit: "%" },
+                width: { value: 50, unit: "%" },
+                position: 1,
+                title: 'Project'
+            };
+            fctx.Navigation.navigateTo(pageInput, navigationOptions);       
+      });
+
+      loadInputData = async () => {
+        const languagesQuery = `?$select=sl_name,sl_code&$filter=statecode eq 0`;
+        const promotionTypeQuery = getQueryForGlobalOptionSet("sl_promotion_typecode");
+        const marketQuery = getQueryForGlobalOptionSet("sl_market");
+
+        const languagesPromise = fctx.WebApi.retrieveMultipleRecords("sl_language", languagesQuery);
+        const promotionTypePromise = fetch(promotionTypeQuery);
+        const marketPromise = fetch(marketQuery);
+
+        const responce = await Promise.all([languagesPromise, promotionTypePromise, marketPromise]);
+        const languages = responce[0];
+        const languagesElem = document.getElementById("language");
+        languages.entities.forEach((l) => {
+          const option = document.createElement("option");
+          option.text = l.sl_name;
+          option.value = l.sl_code;
+          option.id = l.sl_languageid;
+          if (l.sl_code?.toUpperCase() === "EN") option.selected = true;
+          languagesElem.add(option, 0);
+        });
+
+        const promotion = await responce[1].json();
+        const promotionsElem = document.getElementById("promotion_type");
+        promotion.Options.forEach((p) => {
+          const option = document.createElement("option");
+          option.text = p.Label.LocalizedLabels[0].Label;
+          option.value = p.Value;
+          promotionsElem.add(option, 0);
+        });
+
+        const market = await responce[2].json();
+        const marketElem = document.getElementById("market");
+        market.Options.forEach((m) => {
+          const option = document.createElement("option");
+          option.text = m.Label.LocalizedLabels[0].Label;
+          option.value = m.Value;
+          marketElem.add(option, 0);
+        });
+      };
+
+      getQueryForGlobalOptionSet = (optionSetName) => {
+        return `${fctx.Page.context.getClientUrl()}/api/data/v9.1/GlobalOptionSetDefinitions(Name='${optionSetName}')`;
+      };
+
+      /*
+               const json = `{
+          "objectName": "sky",
+      	"preview": "https://static.tildacdn.com/tild3830-3562-4865-b562-643637396531/view01_final.jpg",
+      	"detailsLabel": "Details",
+      	"details": {"City": "Limassol", "Area": "Potamos Germasogeias", "Completion": "Under construction", "Distance to sea": "300 m", "Prices from": "800,000 €", "Completion date": "Jan 2021"},
+      	"majorBenefitsLabel": "Major benefits",
+      	"majorBenefits": "<ul style='padding-left: 0;'><li>landmark architecture from the leading London bureau;</li> <li>the only high-rise condominium of Limassol with no noise from the coastal road;</li><li>breathtaking unobstructed sea views;</li><li>hotel-style facilities: concierge, SPA, outdoor pool, heated indoor pool, gym, tennis court, green area, and underground parking;</li></ul>",
+      	"websiteUrl": "bbf.com",
+      	"phoneLabel": "T",
+      	"phone": "+357 25 315 300",
+      	"faxLabel": "F",
+      	"fax": "+357 25 315 301",
+      	"emailLabel": "E",
+      	"email": "info@bbf.com",
+      	"address": "28 Ambelakion Street, Germasogeia 4046 Limassol, Cyprus P.O. Box 70649, 3801 Limassol",
+      	"tagline": "Build. Better. Future.",
+      	"metadata": {
+      		"withLogo": false,
+      		"mainTableColumns": [
+      			{"name":"№","unit":false},
+      			{"name":"IBP","unit":false},
+      			{"name":"Floor","unit":false},
+      			{"name":"Type","unit":false},
+      			{"name":"Bedrooms","unit":false},
+      			{"name":"Indoor area","unit":"sq. m."},
+      			{"name":"Cov. veranda","unit":"sq. m."},
+      			{"name":"Uncov. veranda","unit":"sq. m."},
+      			{"name":"Roof terrace","unit":"sq. m."},
+      			{"name":"Common area","unit":"sq. m."},
+      			{"name":"Total area","unit":"sq. m."},
+      			{"name":"Pool","unit":false},
+      			{"name":"PRICE","unit":"€"},
+      			{"name":"VAT","unit":false}
+      		]
+      	},
+          "mainTable": [{
+      		"blockName": "Block A",
+      		"flats": [
+      					[
+      						[ "№ 101","","1","Appartment","2","75.6","18.7","0.0","0.0","10.5","104.7","Common","Sold","Yes"],
+      						[ "№ 101","","1","Appartment","2","75.6","18.7","0.0","0.0","10.5","104.7","Common","Sold","Yes"],
+      						[ "№ 101","","1","Appartment","2","75.6","18.7","0.0","0.0","10.5","104.7","Common","Sold","Yes"]
+      					],
+      					[
+      						[ "№ 101","","1","Appartment","2","75.6","18.7","0.0","0.0","10.5","104.7","Common","Sold","Yes"],
+      						[ "№ 101","","1","Appartment","2","75.6","18.7","0.0","0.0","10.5","104.7","Common","Sold","Yes"],
+      						[ "№ 101","","1","Appartment","2","75.6","18.7","0.0","0.0","10.5","104.7","Common","Sold","Yes"]
+      					]
+      				]
+      	},
+      	{
+      		"blockName": "Block B",
+      		"flats": [
+      					[
+      						[ "№ 101","","1","Appartment","2","75.6","18.7","0.0","0.0","10.5","104.7","Common","Sold","Yes"],
+      						[ "№ 101","","1","Appartment","2","75.6","18.7","0.0","0.0","10.5","104.7","Common","Sold","Yes"],
+      						[ "№ 101","","1","Appartment","2","75.6","18.7","0.0","0.0","10.5","104.7","Common","Sold","Yes"]
+      					],
+      					[
+      						[ "№ 101","","1","Appartment","2","75.6","18.7","0.0","0.0","10.5","104.7","Common","Sold","Yes"],
+      						[ "№ 101","","1","Appartment","2","75.6","18.7","0.0","0.0","10.5","104.7","Common","Sold","Yes"],
+      						[ "№ 101","","1","Appartment","2","75.6","18.7","0.0","0.0","10.5","104.7","Common","Sold","Yes"]
+      					]
+      				]
+      	}]
+      }`
+               */
+    </script>
+  </body>
+</html>
