@@ -6,7 +6,7 @@ using System.Threading.Tasks;
 
 namespace SoftLine.ActionPlugins.SharePoint
 {
-    interface ISharePointClient : IDisposable
+    public interface ISharePointClient : IDisposable
     {
         byte[] GetFileByAbsoluteUrl(string url);
     }
