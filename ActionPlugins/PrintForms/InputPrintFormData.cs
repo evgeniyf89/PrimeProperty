@@ -4,7 +4,7 @@ namespace SoftLine.ActionPlugins.PrintForms
 {
    public class InputPrintFormData
     {
-        public EntityReference Market { get; set; }
+        public OptionSetValue Market { get; set; }
 
         public EntityReference Language { get; set; }
 

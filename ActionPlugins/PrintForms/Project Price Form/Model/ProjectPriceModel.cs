@@ -35,11 +35,17 @@ namespace SoftLine.ActionPlugins.PrintForms.ProjectPriceForm.Model
 
     public class MainTableColumn
     {
+        public MainTableColumn(string name, object unit)
+        {
+            Name = name;
+            Unit = unit;
+        }
+
         [JsonProperty("name")]
         public string Name { get; set; }
 
         [JsonProperty("unit")]
-        public bool Unit { get; set; }
+        public object Unit { get; set; }
     }
 
     public class Metadata

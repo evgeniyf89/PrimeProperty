@@ -12,7 +12,7 @@ using System.Threading.Tasks;
 
 namespace SoftLine.ActionPlugins
 {
-    class Helper
+    public class Helper
     {
         public static SharePointData GetInputDataForSp(IOrganizationService service)
         {

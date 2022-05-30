@@ -5,7 +5,7 @@ using System.Net;
 
 namespace SoftLine.ActionPlugins.SharePoint
 {
-    class SharePointClient : ISharePointClient
+    public class SharePointClient : ISharePointClient
     {
         private readonly ClientContext _context;
         public SharePointClient(string sharepointUrl, ICredentials sharepointCredentials)

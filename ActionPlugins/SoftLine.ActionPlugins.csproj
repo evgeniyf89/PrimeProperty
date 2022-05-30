@@ -245,10 +245,12 @@
     <Compile Include="Model\ServerCodeClass.cs" />
     <Compile Include="OptionSets\DocumentParameterFieldType.cs" />
     <Compile Include="OptionSets\DocumentParameterRequestMethod.cs" />
+    <Compile Include="OptionSets\PromotionType.cs" />
     <Compile Include="OptionSets\ShortRentSTRentSstatus.cs" />
     <Compile Include="OptionSets\UploadFormatTyprCode.cs" />
     <Compile Include="PrintForms\InputPrintFormData.cs" />
     <Compile Include="PrintForms\IPrintFormConstructor.cs" />
+    <Compile Include="PrintForms\Metadata\ProjectPriceMetadata.cs" />
     <Compile Include="PrintForms\PrintFormConstructor.cs" />
     <Compile Include="PrintForms\Project Price Form\Model\ProjectPriceModel.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />

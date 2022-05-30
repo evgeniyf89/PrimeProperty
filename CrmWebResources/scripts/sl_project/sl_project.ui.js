@@ -408,10 +408,11 @@ Softline.Subject.Buttons = {
             //const byteArray = Softline.Subject.Buttons.PrintForm.base64ToArrayBuffer(data.File); 
             //Xrm.Utility.closeProgressIndicator();          
             //Softline.Subject.Buttons.PrintForm.download(byteArray, data.FileName, "application/msword");
-                        
+            const projectid = ids[0];
             const pageInput = {
                 pageType: "webresource",
                 webresourceName: "sl_projectPriceInputParameters.html",
+                data: `${projectid}`
             };
             const navigationOptions = {
                 target: 2,
@@ -424,61 +425,6 @@ Softline.Subject.Buttons = {
         },
         enable: fctx => {
             return true;
-        },
-
-        download: (data, filename, type) => {
-            var file = new Blob([data], { type: type });
-            if (window.navigator.msSaveOrOpenBlob)
-                window.navigator.msSaveOrOpenBlob(file, filename);
-            else {
-                var a = document.createElement("a"),
-                    url = URL.createObjectURL(file);
-                a.href = url;
-                a.download = filename;
-                document.body.appendChild(a);
-                a.click();
-                setTimeout(function () {
-                    document.body.removeChild(a);
-                    window.URL.revokeObjectURL(url);
-                }, 0);
-            }
-        },
-
-        base64ToArrayBuffer: (base64) => {
-            const binaryString = window.atob(base64);
-            const len = binaryString.length;
-            const bytes = new Uint8Array(len);
-            for (let i = 0; i < len; i++) {
-                bytes[i] = binaryString.charCodeAt(i);
-            }
-            return bytes.buffer;
-        },
-
-        printFormRequest: (projectid, templateid) => {
-            return {
-                data: {
-                    "@odata.type": `Microsoft.Dynamics.CRM.sl_project`,
-                    [`sl_projectid`]: projectid,
-                },
-                templateid: templateid,
-                getMetadata: function () {
-                    return {
-                        boundParameter: null,
-                        parameterTypes: {
-                            templateid: {
-                                typeName: "Edm.Int",
-                                structuralProperty: 1,
-                            },
-                            data: {
-                                typeName: `sl_project`,
-                                structuralProperty: 5,
-                            },
-                        },
-                        operationType: 0,
-                        operationName: "sl_get_print_form",
-                    };
-                },
-            };
-        }
+        },  
     }
 }
