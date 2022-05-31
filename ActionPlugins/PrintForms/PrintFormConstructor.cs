@@ -8,6 +8,7 @@ using Microsoft.Xrm.Sdk.Query;
 using SoftLine.ActionPlugins.Extensions;
 using SoftLine.ActionPlugins.OptionSets;
 using SoftLine.ActionPlugins.PrintForms.Metadata;
+using SoftLine.ActionPlugins.PrintForms.Project_Price_Form.Model;
 using SoftLine.ActionPlugins.PrintForms.ProjectPriceForm.Model;
 using SoftLine.ActionPlugins.SharePoint;
 
@@ -58,31 +59,35 @@ namespace SoftLine.ActionPlugins.PrintForms
             var poolTitle = getData(ProjectPriceMetadata.PoolTitle);
             var parkinTitle = getData(ProjectPriceMetadata.ParkinTitle);
             var priceHeader = getData(ProjectPriceMetadata.PriceHeader);
+            var m2Title = getData(ProjectPriceMetadata.M2Title);
             var vat = getData(ProjectPriceMetadata.VATHeader);
             var isLtRent = inputData.PromotionType?.Value == ((int)PromotionType.LtRent);
 
 
-            var columns = new List<MainTableColumn>()
+            var _empty = string.Empty;
+            var flatColumns = new[]
             {
-                new MainTableColumn("№", false),
-                new MainTableColumn("IBP", isLtRent),
-                new MainTableColumn("ID", !project.GetAttributeValue<bool>("sl_idbit")),
-                new MainTableColumn(floorLabel, project.GetAttributeValue<bool>("sl_foorbit")),
-                new MainTableColumn(typeLabel, project.GetAttributeValue<bool>("sl_typebit")),
-                new MainTableColumn(bedLabel, project.GetAttributeValue<bool>("sl_bedbit")),
-                new MainTableColumn(innerTitle, project.GetAttributeValue<bool>("sl_indoorbit")),
-                new MainTableColumn(coveredVerandaTitle, project.GetAttributeValue<bool>("sl_covverbit")),
-                new MainTableColumn(openVerandaTitle, project.GetAttributeValue<bool>("sl_uncovverbit")),
-                new MainTableColumn(terasseTitle, project.GetAttributeValue<bool>("sl_roof_terracebit")),
-                new MainTableColumn(plotTitle, project.GetAttributeValue<bool>("sl_plotbit")),
-                new MainTableColumn(generalUsageTitle, project.GetAttributeValue<bool>("sl_commonbit")),
-                new MainTableColumn(storageTitle, project.GetAttributeValue<bool>("sl_storagebit")),
-                new MainTableColumn(totalAreaHeader, project.GetAttributeValue<bool>("sl_total_areabit")),
-                new MainTableColumn(poolTitle, project.GetAttributeValue<bool>("sl_poolbit")),
-                new MainTableColumn(parkinTitle, project.GetAttributeValue<bool>("sl_parkingbit")),
-                new MainTableColumn(priceHeader, project.GetAttributeValue<bool>("sl_pricebit")),
-                new MainTableColumn(vat,isLtRent)
+                new FlatTableColumn("№", _empty, ""),
+                new FlatTableColumn("IBP",_empty,"",isLtRent),
+                new FlatTableColumn("ID",_empty,"",!project.GetAttributeValue<bool>("sl_idbit")),
+                new FlatTableColumn(floorLabel,_empty,"",project.GetAttributeValue<bool>("sl_foorbit")),
+                new FlatTableColumn(typeLabel,_empty,"",project.GetAttributeValue<bool>("sl_typebit")),
+                new FlatTableColumn(bedLabel,_empty,"", project.GetAttributeValue<bool>("sl_bedbit")),
+                new FlatTableColumn(innerTitle, m2Title,"", project.GetAttributeValue<bool>("sl_indoorbit")),
+                new FlatTableColumn(coveredVerandaTitle,m2Title,"", project.GetAttributeValue<bool>("sl_covverbit")),
+                new FlatTableColumn(openVerandaTitle,m2Title,"", project.GetAttributeValue<bool>("sl_uncovverbit")),
+                new FlatTableColumn(terasseTitle,m2Title,"", project.GetAttributeValue<bool>("sl_roof_terracebit")),
+                new FlatTableColumn(plotTitle,m2Title,"", project.GetAttributeValue<bool>("sl_plotbit")),
+                new FlatTableColumn(generalUsageTitle,m2Title,"", project.GetAttributeValue<bool>("sl_commonbit")),
+                new FlatTableColumn(storageTitle, m2Title,"", project.GetAttributeValue<bool>("sl_storagebit")),
+                new FlatTableColumn(totalAreaHeader, m2Title,"", project.GetAttributeValue<bool>("sl_total_areabit")),
+                new FlatTableColumn(poolTitle,_empty,"", project.GetAttributeValue<bool>("sl_poolbit")),
+                new FlatTableColumn(parkinTitle,_empty,"", project.GetAttributeValue<bool>("sl_parkingbit")),
+                new FlatTableColumn(priceHeader,_empty,"", project.GetAttributeValue<bool>("sl_pricebit")),
+                new FlatTableColumn(vat, _empty, "" ,isLtRent)
             };
+
+
 
             var printForm = new ProjectPrintForm()
             {
@@ -101,7 +106,10 @@ namespace SoftLine.ActionPlugins.PrintForms
                 Metadata = new ProjectPriceForm.Model.Metadata()
                 {
                     WithLogo = inputData.IsWithLogo,
-                    MainTableColumns = columns
+                    MainTableColumns = flatColumns
+                    .Where(x=>!x.IsInvisibility)
+                    .Select(x => new MainTableColumn(x.Header, x.Dimension))
+                    .ToList()
                 },
                 DetailsLabel = getData(ProjectPriceMetadata.DetailsLabel),
                 MajorBenefitsLabel = getData(ProjectPriceMetadata.MainBenefitsName),

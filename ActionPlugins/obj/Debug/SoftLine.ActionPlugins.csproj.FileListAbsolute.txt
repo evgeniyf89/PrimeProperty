@@ -15,8 +15,6 @@ C:\Users\Fedotoveni\source\repos\PrimePropertyGroup\ActionPlugins\bin\Debug\Newt
 C:\Users\Fedotoveni\source\repos\PrimePropertyGroup\ActionPlugins\obj\Debug\SoftLine.ActionPlugins.csproj.CopyComplete
 C:\Users\Fedotoveni\source\repos\PrimePropertyGroup\ActionPlugins\obj\Debug\ActionPlugins.dll
 C:\Users\Fedotoveni\source\repos\PrimePropertyGroup\ActionPlugins\obj\Debug\ActionPlugins.pdb
-C:\Users\Fedotoveni\source\repos\PrimePropertyGroup\ActionPlugins\bin\Debug\DocumentFormat.OpenXml.dll
-C:\Users\Fedotoveni\source\repos\PrimePropertyGroup\ActionPlugins\bin\Debug\DocumentFormat.OpenXml.xml
 C:\Users\Fedotoveni\source\repos\PrimePropertyGroup\ActionPlugins\bin\Debug\System.IO.Packaging.dll
 C:\Users\Fedotoveni\source\repos\PrimePropertyGroup\ActionPlugins\bin\Debug\System.IO.Packaging.xml
 C:\Users\Fedotoveni\source\repos\PrimePropertyGroup\ActionPlugins\obj\Debug\SoftLine.ActionPlugins.csproj.AssemblyReference.cache

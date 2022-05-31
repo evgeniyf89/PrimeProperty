@@ -74,6 +74,7 @@
     <Content Include="html\imageLoader\watermark.js" />
     <Content Include="html\imageLoader\watermark_big.png" />
     <Content Include="html\map\map.html" />
+    <Content Include="html\printed forms\PricePrintForm.html" />
     <Content Include="html\printed forms\projectPriceInputParameters.html" />
     <Content Include="html\translete\translete_form.html" />
     <Content Include="scripts\sharepointdocument\sharepointdocument.ui.js" />

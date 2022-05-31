@@ -81,12 +81,12 @@
     </form>
     <script>
         const fctx = parent.Xrm;
-        var _inputParameter = (function () {
-            var queryString = decodeURIComponent(location.search.substring(1));
-            var params = {};
-            var queryStringParts = queryString.split("&");
-            for (var i = 0; i < queryStringParts.length; i++) {
-                var pieces = queryStringParts[i].split("=");
+        const _inputParameter = (() => {
+            const queryString = decodeURIComponent(location.search.substring(1));
+            const params = {};
+            const queryStringParts = queryString.split("&");
+            for (let i = 0; i < queryStringParts.length; i++) {
+                const pieces = queryStringParts[i].split("=");
                 params[pieces[0].toLowerCase()] = pieces.length === 1 ? null : pieces[1];
             }
             return params;
@@ -120,7 +120,7 @@
             fctx.Navigation.navigateTo(pageInput, navigationOptions);
         });
 
-       const printFormRequest = (e) => {
+        const printFormRequest = (e) => {
             const elements = e.target.elements;
             const languageIndex = elements.language.selectedIndex;
             return {
