@@ -393,21 +393,7 @@ Softline.Subject.Buttons = {
     },
     PrintForm: {
         command: async (fctx, ids) => {
-            debugger;
-            //Xrm.Utility.showProgressIndicator("Loading");
-            //const projectid = ids[0];
-            //const request = Softline.Subject.Buttons.PrintForm.printFormRequest(projectid, 1);
-            //const responce = await Xrm.WebApi.online.execute(request);
-            //const json = await responce.json();
-            //const data = JSON.parse(json.responce);
-            //if (data.IsError) {
-            //    Xrm.Utility.closeProgressIndicator();
-            //    Xrm.Utility.alertDialog(data.Message);
-            //    return;
-            //}
-            //const byteArray = Softline.Subject.Buttons.PrintForm.base64ToArrayBuffer(data.File); 
-            //Xrm.Utility.closeProgressIndicator();          
-            //Softline.Subject.Buttons.PrintForm.download(byteArray, data.FileName, "application/msword");
+            debugger;            
             const projectid = ids[0];
             const pageInput = {
                 pageType: "webresource",

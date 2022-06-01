@@ -2,27 +2,21 @@
 using System.Collections.Generic;
 
 namespace SoftLine.ActionPlugins.PrintForms.ProjectPriceForm.Model
-{  
-    public class Details
+{
+
+    public class Detail
     {
-        [JsonProperty("City")]
-        public string City { get; set; }
+        public Detail(string label, string value)
+        {
+            Label = label;
+            Value = value;
+        }
+        [JsonProperty("label")]
+        public string Label { get; }
 
-        [JsonProperty("Area")]
-        public string Area { get; set; }
-
-        [JsonProperty("Completion")]
-        public string Completion { get; set; }
-
-        [JsonProperty("Distance to sea")]
-        public string DistanceToSea { get; set; }
-
-        [JsonProperty("Prices from")]
-        public string PricesFrom { get; set; }
-
-        [JsonProperty("Completion date")]
-        public string CompletionDate { get; set; }
-    }
+        [JsonProperty("value")]
+        public string Value { get;}
+    }    
 
     public class MainTable
     {
@@ -69,7 +63,7 @@ namespace SoftLine.ActionPlugins.PrintForms.ProjectPriceForm.Model
         public string DetailsLabel { get; set; }
 
         [JsonProperty("details")]
-        public Details Details { get; set; }
+        public List<Detail> Details { get; set; }
 
         [JsonProperty("majorBenefitsLabel")]
         public string MajorBenefitsLabel { get; set; }

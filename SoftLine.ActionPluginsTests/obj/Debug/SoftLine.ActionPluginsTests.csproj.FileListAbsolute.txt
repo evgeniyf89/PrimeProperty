@@ -45,6 +45,4 @@ C:\Users\Fedotoveni\source\repos\PrimePropertyGroup\SoftLine.ActionPluginsTests\
 C:\Users\Fedotoveni\source\repos\PrimePropertyGroup\SoftLine.ActionPluginsTests\bin\Debug\System.Security.Cryptography.Primitives.dll
 C:\Users\Fedotoveni\source\repos\PrimePropertyGroup\SoftLine.ActionPluginsTests\bin\Debug\System.Security.Cryptography.X509Certificates.dll
 C:\Users\Fedotoveni\source\repos\PrimePropertyGroup\SoftLine.ActionPluginsTests\bin\Debug\SoftLine.ActionPluginsTests.dll.config
-C:\Users\Fedotoveni\source\repos\PrimePropertyGroup\SoftLine.ActionPluginsTests\bin\Debug\DocumentFormat.OpenXml.dll
 C:\Users\Fedotoveni\source\repos\PrimePropertyGroup\SoftLine.ActionPluginsTests\bin\Debug\ActionPlugins.dll.config
-C:\Users\Fedotoveni\source\repos\PrimePropertyGroup\SoftLine.ActionPluginsTests\bin\Debug\DocumentFormat.OpenXml.xml
