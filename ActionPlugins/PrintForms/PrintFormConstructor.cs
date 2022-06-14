@@ -6,6 +6,7 @@ using System.Threading.Tasks;
 using Microsoft.Xrm.Sdk;
 using Microsoft.Xrm.Sdk.Query;
 using SoftLine.ActionPlugins.Extensions;
+using SoftLine.ActionPlugins.Languages;
 using SoftLine.ActionPlugins.OptionSets;
 using SoftLine.ActionPlugins.PrintForms.Metadata;
 using SoftLine.ActionPlugins.PrintForms.Project_Price_Form.Model;
@@ -35,7 +36,7 @@ namespace SoftLine.ActionPlugins.PrintForms
                 ? default
                 : $"data:{MimeType.Jpeg};base64,{Convert.ToBase64String(pictureByte)}";
 
-            var metadata = RettiveMetadata(inputData.Language.Id);
+            var metadata = RetriveMetadata(inputData.Language.Id);
             string getData(ProjectPriceMetadata priceMetadata)
             {
                 var data = metadata[priceMetadata.StringValue()].FirstOrDefault();
@@ -69,9 +70,40 @@ namespace SoftLine.ActionPlugins.PrintForms
             var isLtRent = inputData.PromotionType?.Value == ((int)PromotionType.LtRent);
 
 
-
             var _empty = string.Empty;
             var flats = RetriveFlats(inputData);
+            var flatsType = new Lazy<Dictionary<Guid, string>>(() =>
+             {
+                 var typeGuid = flats
+                 .Select(x => x.GetAttributeValue<EntityReference>("sl_property_typeid"))
+                 .Where(x => x != null);
+                 var flatFilter = string.Join(_empty, typeGuid.Select(x => $"<value>{x.Id}</value>"));
+                 var query = $@"<fetch no-lock='true'>
+                               <entity name='sl_property_type'>
+                                 <attribute name='sl_name' />
+                                 <filter type='and'>
+                                   <condition attribute='sl_property_typeid' operator='in' >
+                                   {flatFilter}
+                                   </condition>
+                                 </filter>
+                                 <link-entity name='sl_property_type_translation' from='sl_property_typeid' to='sl_property_typeid' link-type='outer' alias='ad'>
+                                   <attribute name='sl_name' />
+                                   <filter>
+                                     <condition attribute='sl_languageid' operator='eq' value='{inputData.Language.Id}' />
+                                   </filter>
+                                 </link-entity>
+                               </entity>
+                             </fetch>";
+                 return _crmService.RetrieveMultiple(new FetchExpression(query))
+                 .Entities
+                 .GroupBy(x => x.Id)
+                 .ToDictionary(x => x.Key, y =>
+                 {
+                     var value = y.FirstOrDefault();
+                     return value.GetValue<string>("ad.sl_name") ?? value.GetValue<string>("sl_name");
+                 });
+             });
+
             var newList = new Lazy<List<string>>(() => new List<string>());
             List<string> flatValues(string attr, bool isNoNeeded = false)
             {
@@ -110,13 +142,21 @@ namespace SoftLine.ActionPlugins.PrintForms
             var isParking = project.GetAttributeValue<bool>("sl_parkingbit");
             var isPrice = project.GetAttributeValue<bool>("sl_pricebit");
 
+            var types = isNoType ? newList.Value : flats.Select(x =>
+            {
+                var typeRef = x.GetAttributeValue<EntityReference>("sl_property_typeid");
+                if (Language.English.Equals(inputData.Language))
+                    return typeRef?.Name;
+                return typeRef is null ? default : flatsType.Value[typeRef.Id];
+            });
+            var poolData = isPoolb ? newList.Value : GetPoolData(inputData, flats);
             var flatColumns = new[]
             {
                 new FlatTableColumn("№", _empty, flatValues("sl_number")),
                 new FlatTableColumn("IBP",_empty, isLtRent ? newList.Value : ibp.Value, isLtRent),
                 new FlatTableColumn("ID",_empty, flatValues("sl_id", isNoWithId), isNoWithId),
                 new FlatTableColumn(floorLabel,_empty, flatValues("sl_floor", isNoFloor), isNoFloor),
-                new FlatTableColumn(typeLabel,_empty, newList.Value , isNoType), // --------------------------------------------- хитро  сделанно
+                new FlatTableColumn(typeLabel,_empty, types , isNoType),
                 new FlatTableColumn(bedLabel,_empty, flatValues("sl_number_of_bedrooms", isNoBed), isNoBed),
                 new FlatTableColumn(innerTitle, m2Title,flatValues("sl_indoor", isIndoor), isIndoor),
                 new FlatTableColumn(coveredVerandaTitle, m2Title, flatValues("sl_covered_veranda", isCovver), isCovver),
@@ -126,7 +166,7 @@ namespace SoftLine.ActionPlugins.PrintForms
                 new FlatTableColumn(generalUsageTitle,m2Title, flatValues("sl_common_area", isCommon), isCommon),
                 new FlatTableColumn(storageTitle, m2Title, flatValues("sl_storage_size", isStorage),isStorage),
                 new FlatTableColumn(totalAreaHeader, m2Title, flatValues("sl_total_area", isTotal), isTotal),
-                new FlatTableColumn(poolTitle,_empty, newList.Value, isPoolb), // --------------------------------------------- хитро  сделанно
+                new FlatTableColumn(poolTitle,_empty, poolData, isPoolb), 
                 new FlatTableColumn(parkinTitle,_empty, flatValues("sl_parking", isParking), isParking),
                 new FlatTableColumn(priceHeader,_empty, newList.Value, isPrice),// --------------------------------------------- хитро  сделанно
                 new FlatTableColumn(vat, _empty, vatsValue , isLtRent)
@@ -136,7 +176,7 @@ namespace SoftLine.ActionPlugins.PrintForms
                 .Where(x => !x.IsInvisibility && x.Value.Length > 0)
                 .ToArray();
 
-            var rowsLenght = columns.Max(x => x.Value.Length);
+            var rowsLenght = columns.Length == default ? default : columns.Max(x => x.Value.Length);
             var cels = new string[columns.Length, rowsLenght];
             for (var i = 0; i < columns.Length; i++)
             {
@@ -172,7 +212,7 @@ namespace SoftLine.ActionPlugins.PrintForms
                     new Detail(regionName, project.GetValue<string>("area.sl_name")),
                     new Detail(stageLabel, project.FormattedValues.Contains("sl_stagecode") ? project.FormattedValues["sl_stagecode"] : default),
                     new Detail(toSeaName, $"{project.GetAttributeValue<decimal>("sl_distance_sea"):0.##} m"),
-                    new Detail(priceFromName, "100 $"),
+                    new Detail(priceFromName, "100 $"), // price
                     new Detail(completedConstructionName, project.GetAttributeValue<DateTime?>("sl_completion_date")?.ToString("dd.MM.yyyy")),
                 },
                 Preview = pictureBase64,
@@ -300,7 +340,7 @@ namespace SoftLine.ActionPlugins.PrintForms
             return _crmService.RetrieveMultiple(new FetchExpression(query)).Entities;
         }
 
-        private Dictionary<string, Entity[]> RettiveMetadata(Guid languageid)
+        private Dictionary<string, Entity[]> RetriveMetadata(Guid languageid)
         {
             var keys = Enum.GetValues(typeof(ProjectPriceMetadata))
                 .Cast<ProjectPriceMetadata>()
@@ -348,6 +388,45 @@ namespace SoftLine.ActionPlugins.PrintForms
             //        };
             //    })
             //    .ToArray();
+        }
+
+        private List<string> GetPoolData(InputPrintFormData inputData, IEnumerable<Entity> flats)
+        {
+            if (flats.Count() == 0) return new List<string>();
+            var poolAttrName = "sl_type_of_poolcode";
+            if (Language.English.Equals(inputData.Language))
+                return flats
+                    .Select(x => x.FormattedValues.Contains(poolAttrName) ? x.FormattedValues[poolAttrName] : default)
+                    .ToList();
+            var distinctPoolType = flats
+                .Select(x => x.GetAttributeValue<OptionSetValue>(poolAttrName)?.Value)
+                .Where(x => x.HasValue)
+                .Distinct();
+            var query = $@"<fetch no-lock='true'>
+                           <entity name='sl_word_for_report'>
+                             <attribute name='sl_word' />
+                             <attribute name='sl_value' />
+                             <filter type='and'>
+                               <condition attribute='sl_option_set' operator='eq' value='sl_unit.sl_type_of_poolcode' />
+                               <condition attribute='sl_value' operator='in'>
+                                 {string.Join(string.Empty, distinctPoolType.Select(x => $"<value>{x}</value>"))}
+                               </condition>
+                             </filter>
+                             <link-entity name='sl_word_translation' from='sl_wordid' to='sl_word_for_reportid' link-type='inner' alias='ab'>
+                               <attribute name='sl_name' />
+                             </link-entity>
+                           </entity>
+                         </fetch>";
+            var translations = _crmService.RetrieveMultiple(new FetchExpression(query)).Entities;          
+            return flats
+                .Select(x =>
+                {
+                    var value = x.GetAttributeValue<OptionSetValue>(poolAttrName)?.Value;
+                    if (!value.HasValue) return default;
+                    var translation = translations.FirstOrDefault(t => t.GetAttributeValue<int>("sl_value") == value);
+                    return translation?.GetValue<string>("ab.sl_name") ?? translation.GetAttributeValue<string>("sl_word");
+                })
+                .ToList();
         }
     }
 }

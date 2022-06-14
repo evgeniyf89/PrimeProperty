@@ -235,6 +235,7 @@
     <Compile Include="Helper.cs" />
     <Compile Include="ImageLoader.cs" />
     <Compile Include="ImageRecipient.cs" />
+    <Compile Include="Languages\Language.cs" />
     <Compile Include="MimeType.cs" />
     <Compile Include="OptionSets\DocumentParameterFieldType.cs" />
     <Compile Include="OptionSets\DocumentParameterRequestMethod.cs" />

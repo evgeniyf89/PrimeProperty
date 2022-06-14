@@ -45,7 +45,7 @@ namespace SoftLine.ActionPlugins.Tests
                 Language = new EntityReference("sl_language", new Guid("{A0523A24-20DB-EB11-BACB-000D3A2C3636}")),
                 Market = new OptionSetValue(486160002),
                 PromotionType = new OptionSetValue(102690001),
-                TargetEntityRef = new EntityReference("sl_project", new Guid("30824c04-2cdb-eb11-bacb-000d3a2c32dc"))
+                TargetEntityRef = new EntityReference("sl_project", new Guid("{3D5918D4-7814-EC11-B6E6-6045BD87A5F2}"))
             };
             var tt = printFormConstructor.GetForm(inputData);
             var json = JsonConvert.SerializeObject(tt);
