@@ -240,7 +240,9 @@
     <Compile Include="OptionSets\DocumentParameterFieldType.cs" />
     <Compile Include="OptionSets\DocumentParameterRequestMethod.cs" />
     <Compile Include="OptionSets\PromotionType.cs" />
-    <Compile Include="OptionSets\ShortRentSTRentSstatus.cs" />
+    <Compile Include="OptionSets\ShortRentSTRentStatus.cs" />
+    <Compile Include="OptionSets\UnitLTRStatusCode.cs" />
+    <Compile Include="OptionSets\UnitSaleStatusCode.cs" />
     <Compile Include="OptionSets\UploadFormatTyprCode.cs" />
     <Compile Include="PrintForms\InputPrintFormData.cs" />
     <Compile Include="PrintForms\IPrintFormConstructor.cs" />

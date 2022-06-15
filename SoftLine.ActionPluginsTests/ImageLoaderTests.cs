@@ -270,7 +270,7 @@ namespace SoftLine.ActionPlugins.Tests
             
             var startDate = new DateTime(2022, 02, 1);
             var endDate = new DateTime(2022, 02, 12);
-            var status = ShortRentSTRentSstatus.Reserved;
+            var status = ShortRentSTRentStatus.Reserved;
 
             var reserveOrRentProperty = new ReserveOrRentProperty();
 
@@ -307,7 +307,7 @@ namespace SoftLine.ActionPlugins.Tests
             var rentalFree = rentPricesObj.Sum(x => x.Price);
             var shortRentAvailable = reserveOrRentProperty.RetriveShortRentAvailable(propertyOpportunity, _service);
             var rentStatuscode = shortRentAvailable?.GetAttributeValue<OptionSetValue>("sl_st_rent_statuscode")?.Value;
-            if (shortRentAvailable != null && rentStatuscode != (int)ShortRentSTRentSstatus.Reserved)
+            if (shortRentAvailable != null && rentStatuscode != (int)ShortRentSTRentStatus.Reserved)
             {
                 throw new Exception(JsonConvert.SerializeObject(new { IsError = true, Message = $"There is already a rental for the dates you enter." }));
                 return;

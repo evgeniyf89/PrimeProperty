@@ -24,7 +24,7 @@ namespace SoftLine.ActionPlugins
 
             var startDate = DateTime.Parse(startDateStr);
             var endDate = DateTime.Parse(endDateStr);
-            var status = (ShortRentSTRentSstatus)int.Parse(statusStr);
+            var status = (ShortRentSTRentStatus)int.Parse(statusStr);
 
             var serviceFactory = (IOrganizationServiceFactory)serviceProvider.GetService(typeof(IOrganizationServiceFactory));
             var systemService = serviceFactory.CreateOrganizationService(null);
@@ -64,7 +64,7 @@ namespace SoftLine.ActionPlugins
             var rentalFree = rentPricesObj.Sum(x => x.Price);
             var shortRentAvailable = RetriveShortRentAvailable(propertyOpportunity, systemService);
             var rentStatuscode = shortRentAvailable?.GetAttributeValue<OptionSetValue>("sl_st_rent_statuscode")?.Value;
-            if (shortRentAvailable != null && rentStatuscode != (int)ShortRentSTRentSstatus.Reserved)
+            if (shortRentAvailable != null && rentStatuscode != (int)ShortRentSTRentStatus.Reserved)
             {
                 context.OutputParameters["responce"] = JsonConvert.SerializeObject(new { IsError = true, Message = $"There is already a rental for the dates you enter." });
                 return;
@@ -85,7 +85,7 @@ namespace SoftLine.ActionPlugins
             context.OutputParameters["responce"] = JsonConvert.SerializeObject(new { IsError = false, Message = $"Short rent available {message}" });
         }
 
-        public Entity CreateRentavailable(ShortRentSTRentSstatus status, DateTime startDate, DateTime endDate, Entity propertyOpportunity, IOrganizationService userService)
+        public Entity CreateRentavailable(ShortRentSTRentStatus status, DateTime startDate, DateTime endDate, Entity propertyOpportunity, IOrganizationService userService)
         {
             var opportunityRef = propertyOpportunity.GetAttributeValue<EntityReference>("sl_opportunityid");
             var propertyRef = propertyOpportunity.GetAttributeValue<EntityReference>("sl_propertyid");
@@ -102,7 +102,7 @@ namespace SoftLine.ActionPlugins
             return rentavailable;
         }
 
-        public void UpdatePropertyOpportunity(ShortRentSTRentSstatus status, DateTime startDate, DateTime endDate, decimal rentalFree, EntityReference propertyOpportunityRef, IOrganizationService userService)
+        public void UpdatePropertyOpportunity(ShortRentSTRentStatus status, DateTime startDate, DateTime endDate, decimal rentalFree, EntityReference propertyOpportunityRef, IOrganizationService userService)
         {
             var propertyOpportunity = new Entity(propertyOpportunityRef.LogicalName, propertyOpportunityRef.Id)
             {
@@ -114,7 +114,7 @@ namespace SoftLine.ActionPlugins
             userService.Update(propertyOpportunity);
         }
 
-        public void UpdateOpportynity(ShortRentSTRentSstatus status, DateTime startDate, DateTime endDate, EntityReference opportunityRef, IOrganizationService userService)
+        public void UpdateOpportynity(ShortRentSTRentStatus status, DateTime startDate, DateTime endDate, EntityReference opportunityRef, IOrganizationService userService)
         {
             if (opportunityRef is null) return;
             var opportunity = new Entity(opportunityRef.LogicalName, opportunityRef.Id)
@@ -126,7 +126,7 @@ namespace SoftLine.ActionPlugins
             userService.Update(opportunity);
         }
 
-        public void UpdateRentavailable(ShortRentSTRentSstatus status, DateTime start, DateTime end, Guid rentAvailable, IOrganizationService userService)
+        public void UpdateRentavailable(ShortRentSTRentStatus status, DateTime start, DateTime end, Guid rentAvailable, IOrganizationService userService)
         {
             var rentavailable = new Entity("sl_short_rent_available", rentAvailable)
             {

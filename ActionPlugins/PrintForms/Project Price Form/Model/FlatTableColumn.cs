@@ -8,12 +8,12 @@ namespace SoftLine.ActionPlugins.PrintForms.Project_Price_Form.Model
 {
     public class FlatTableColumn
     {
-        public FlatTableColumn(string header, string dimension, IEnumerable<string> value, bool isInvisibility = false)
+        public FlatTableColumn(string header, string dimension, IEnumerable<string> value, bool isVisibility = true)
         {
             Header = header;
             Dimension = dimension;
             Value = value.ToArray();
-            IsInvisibility = isInvisibility;
+            IsVisibility = isVisibility;
         }
 
         public string Header { get; }
@@ -22,7 +22,7 @@ namespace SoftLine.ActionPlugins.PrintForms.Project_Price_Form.Model
 
         public string[] Value { get; }
 
-        public bool IsInvisibility { get; }
+        public bool IsVisibility { get; }
 
     }
 }

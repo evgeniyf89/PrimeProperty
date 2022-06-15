@@ -6,7 +6,7 @@ using System.Threading.Tasks;
 
 namespace SoftLine.ActionPlugins.OptionSets
 {
-   public enum ShortRentSTRentSstatus
+   public enum ShortRentSTRentStatus
     {
         NA = 588610000,
         ForRent = 588610001,

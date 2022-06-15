@@ -108,7 +108,7 @@ namespace SoftLine.ActionPlugins
                 };
                 switch (status?.Value)
                 {
-                    case (int)ShortRentSTRentSstatus.Rented:
+                    case (int)ShortRentSTRentStatus.Rented:
                         if (isOppEqual)
                         {
                             rended.Add(range);
@@ -118,7 +118,7 @@ namespace SoftLine.ActionPlugins
                             rendedByOtherOpportunity.Add(range);
                         }
                         break;
-                    case (int)ShortRentSTRentSstatus.Reserved:
+                    case (int)ShortRentSTRentStatus.Reserved:
                         if (isOppEqual)
                         {
                             reserved.Add(range);

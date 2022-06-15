@@ -76,7 +76,7 @@ namespace SoftLine.ActionPlugins
 
                 var rentPrice = new RentPrice(date, price.Value);
                 var rentStatuscode = shortRent?.GetAttributeValue<AliasedValue>("shortRent.sl_st_rent_statuscode")?.Value as OptionSetValue;
-                if (rentStatuscode?.Value == (int)ShortRentSTRentSstatus.Reserved)
+                if (rentStatuscode?.Value == (int)ShortRentSTRentStatus.Reserved)
                 {
                     rentPrice.Employee = (shortRent?.GetAttributeValue<AliasedValue>("opportunity.ownerid")?.Value as EntityReference)?.Name;
                     rentPrice.ExistingReservation = (shortRent?.GetAttributeValue<AliasedValue>("shortRent.sl_opportunityid")?.Value as EntityReference)?.Name;

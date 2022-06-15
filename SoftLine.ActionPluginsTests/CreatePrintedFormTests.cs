@@ -43,9 +43,9 @@ namespace SoftLine.ActionPlugins.Tests
             {
                 IsWithLogo = true,
                 Language = new EntityReference("sl_language", new Guid("{A0523A24-20DB-EB11-BACB-000D3A2C3636}")),
-                Market = new OptionSetValue(486160002),
-                PromotionType = new OptionSetValue(102690001),
-                TargetEntityRef = new EntityReference("sl_project", new Guid("{3D5918D4-7814-EC11-B6E6-6045BD87A5F2}"))
+                Market = new OptionSetValue(486160000),
+                PromotionType = new OptionSetValue(102690000),
+                TargetEntityRef = new EntityReference("sl_project", new Guid("190d68db-b773-ec11-8941-002248818536"))
             };
             var tt = printFormConstructor.GetForm(inputData);
             var json = JsonConvert.SerializeObject(tt);
