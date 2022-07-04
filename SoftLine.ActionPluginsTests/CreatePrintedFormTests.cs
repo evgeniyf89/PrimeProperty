@@ -42,10 +42,10 @@ namespace SoftLine.ActionPlugins.Tests
             var inputData = new InputPrintFormData()
             {
                 IsWithLogo = true,
-                Language = new EntityReference("sl_language", new Guid("{A0523A24-20DB-EB11-BACB-000D3A2C3636}")),
+                Language = new EntityReference("sl_language", new Guid("{a4523a24-20db-eb11-bacb-000d3a2c3636}")),
                 Market = new OptionSetValue(486160000),
                 PromotionType = new OptionSetValue(102690000),
-                TargetEntityRef = new EntityReference("sl_project", new Guid("190d68db-b773-ec11-8941-002248818536"))
+                TargetEntityRef = new EntityReference("sl_project", new Guid("28fc0ae5-70ba-ec11-9840-6045bd8c5aa5"))
             };
             var tt = printFormConstructor.GetForm(inputData);
             var json = JsonConvert.SerializeObject(tt);

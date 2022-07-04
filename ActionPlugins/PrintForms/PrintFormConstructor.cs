@@ -178,7 +178,7 @@ namespace SoftLine.ActionPlugins.PrintForms
             };
 
             var columns = flatColumns
-                .Where(x => !x.IsVisibility && x.Value.Length > 0)
+                .Where(x => x.IsVisibility && x.Value.Length > 0)
                 .ToArray();
 
             var rowsLenght = columns.Length == default ? default : columns.Max(x => x.Value.Length);
@@ -276,6 +276,7 @@ namespace SoftLine.ActionPlugins.PrintForms
                              <attribute name='sl_total_areabit' />
                              <attribute name='sl_poolbit' />
                              <attribute name='sl_parkingbit' />
+                             <attribute name='sl_pricebit' />
                              <filter type='and' >
                                <condition attribute='sl_projectid' operator='eq' value='{inputData.TargetEntityRef.Id}' />
                              </filter>
@@ -408,8 +409,11 @@ namespace SoftLine.ActionPlugins.PrintForms
                                  {string.Join(string.Empty, distinctPoolType.Select(x => $"<value>{x}</value>"))}
                                </condition>
                              </filter>
-                             <link-entity name='sl_word_translation' from='sl_wordid' to='sl_word_for_reportid' link-type='inner' alias='ab'>
+                             <link-entity name='sl_word_translation' from='sl_wordid' to='sl_word_for_reportid' link-type='outer' alias='ab'>
                                <attribute name='sl_name' />
+                                <filter>
+                                   <condition attribute='sl_languageid' operator='eq' value='{inputData.Language.Id}' />
+                                </filter>
                              </link-entity>
                            </entity>
                          </fetch>";
