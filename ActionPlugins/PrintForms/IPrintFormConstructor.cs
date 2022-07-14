@@ -8,6 +8,6 @@ namespace SoftLine.ActionPlugins.PrintForms
 {
     public interface IPrintFormConstructor<T>
     {
-        T GetForm(InputPrintFormData inputData);
+        T GetForms(InputPrintFormData inputData);
     }
 }

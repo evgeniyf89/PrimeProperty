@@ -124,10 +124,7 @@
             const elements = e.target.elements;
             const languageIndex = elements.language.selectedIndex;
             return {
-                data: {
-                    "@odata.type": `Microsoft.Dynamics.CRM.sl_project`,
-                    [`sl_projectid`]: _inputParameter.data,
-                },
+                data: _inputParameter.data,
                 language: {
                     "@odata.type": `Microsoft.Dynamics.CRM.sl_language`,
                     [`sl_languageid`]: elements.language[languageIndex].id,
@@ -139,9 +136,9 @@
                     return {
                         boundParameter: null,
                         parameterTypes: {
-                            data: {
-                                typeName: `sl_project`,
-                                structuralProperty: 5,
+                            data: {                                
+                                typeName: `Edm.String`,
+                                structuralProperty: 1,
                             },
                             language: {
                                 typeName: `sl_language`,

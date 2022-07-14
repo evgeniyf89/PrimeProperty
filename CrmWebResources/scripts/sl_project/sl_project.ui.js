@@ -393,12 +393,12 @@ Softline.Subject.Buttons = {
     },
     PrintForm: {
         command: async (fctx, ids) => {
-            debugger;            
-            const projectid = ids[0];
+            debugger;
+            const projects = JSON.stringify(ids);
             const pageInput = {
                 pageType: "webresource",
                 webresourceName: "sl_projectPriceInputParameters.html",
-                data: `${projectid}`
+                data: `${projects}`
             };
             const navigationOptions = {
                 target: 2,

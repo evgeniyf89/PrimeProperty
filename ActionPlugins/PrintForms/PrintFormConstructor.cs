@@ -15,7 +15,7 @@ using SoftLine.ActionPlugins.SharePoint;
 
 namespace SoftLine.ActionPlugins.PrintForms
 {
-    public class PrintFormConstructor : IPrintFormConstructor<ProjectPrintForm>
+    public class PrintFormConstructor : IPrintFormConstructor<List<ProjectPrintForm>>
     {
         private readonly IOrganizationService _crmService;
         private readonly ISharePointClient _sharePointClient;
@@ -24,61 +24,67 @@ namespace SoftLine.ActionPlugins.PrintForms
             _crmService = crmService;
             _sharePointClient = sharePointClient;
         }
-        public ProjectPrintForm GetForm(InputPrintFormData inputData)
+        public List<ProjectPrintForm> GetForms(InputPrintFormData inputData)
         {
-            var project = RetriveLinkProjectData(inputData);
-            var pictureUrl = project.GetValue<string>("picture.sl_url");
-            var pictureByte = string.IsNullOrEmpty(pictureUrl)
-                ? default
-                : _sharePointClient.GetFileByAbsoluteUrl(pictureUrl);
+            var projects = RetriveLinkProjectData(inputData);
+            var printForms = new List<ProjectPrintForm>();
+            return projects
+                .GroupBy(x => x.Id)
+                .Select(groupProjects =>
+                {
+                    var project = groupProjects.First();
+                    var pictureUrl = project.GetValue<string>("picture.sl_url");
+                    var pictureByte = string.IsNullOrEmpty(pictureUrl)
+                        ? default
+                        : _sharePointClient.GetFileByAbsoluteUrl(pictureUrl);
 
-            var pictureBase64 = pictureByte is null
-                ? default
-                : $"data:{MimeType.Jpeg};base64,{Convert.ToBase64String(pictureByte)}";
+                    var pictureBase64 = pictureByte is null
+                        ? default
+                        : $"data:{MimeType.Jpeg};base64,{Convert.ToBase64String(pictureByte)}";
 
-            var metadata = RetriveMetadata(inputData.Language.Id);
-            string getData(ProjectPriceMetadata priceMetadata)
-            {
-                var data = metadata[priceMetadata.StringValue()].FirstOrDefault();
-                return data.GetValue<string>("translation.sl_name")
-                    ?? data.GetAttributeValue<string>("sl_word");
-            }
+                    var metadata = RetriveMetadata(inputData.Language.Id);
+                    string getData(ProjectPriceMetadata priceMetadata)
+                    {
+                        var data = metadata[priceMetadata.StringValue()].FirstOrDefault();
+                        return data.GetValue<string>("translation.sl_name")
+                            ?? data.GetAttributeValue<string>("sl_word");
+                    }
 
-            var floorLabel = getData(ProjectPriceMetadata.FloorTitle);
-            var typeLabel = getData(ProjectPriceMetadata.TypeHeader);
-            var bedLabel = getData(ProjectPriceMetadata.BedroomsTitle);
-            var innerTitle = getData(ProjectPriceMetadata.InnerTitle);
-            var coveredVerandaTitle = getData(ProjectPriceMetadata.CoveredVerandaTitle);
-            var openVerandaTitle = getData(ProjectPriceMetadata.OpenVerandaTitle);
-            var terasseTitle = getData(ProjectPriceMetadata.TerasseTitle);
-            var plotTitle = getData(ProjectPriceMetadata.PlotTitle);
-            var generalUsageTitle = getData(ProjectPriceMetadata.GeneralUsageTitle);
-            var storageTitle = getData(ProjectPriceMetadata.StorageTitle);
-            var totalAreaHeader = getData(ProjectPriceMetadata.TotalAreaHeader);
-            var poolTitle = getData(ProjectPriceMetadata.PoolTitle);
-            var parkinTitle = getData(ProjectPriceMetadata.ParkinTitle);
-            var priceHeader = getData(ProjectPriceMetadata.PriceHeader);
-            var m2Title = getData(ProjectPriceMetadata.M2Title);
-            var vat = getData(ProjectPriceMetadata.VATHeader);
-            var cityLabel = getData(ProjectPriceMetadata.CityName);
-            var regionName = getData(ProjectPriceMetadata.RegionName);
-            var stageLabel = getData(ProjectPriceMetadata.StageName);
-            var toSeaName = getData(ProjectPriceMetadata.ToSeaName);
-            var priceFromName = getData(ProjectPriceMetadata.PriceFromName);
-            var completedConstructionName = getData(ProjectPriceMetadata.CompletedConstructionName);
-            var yesWord = getData(ProjectPriceMetadata.IBP);
-            var isLtRent = inputData.PromotionType?.Value == ((int)PromotionType.LtRent);
+                    var floorLabel = getData(ProjectPriceMetadata.FloorTitle);
+                    var typeLabel = getData(ProjectPriceMetadata.TypeHeader);
+                    var bedLabel = getData(ProjectPriceMetadata.BedroomsTitle);
+                    var innerTitle = getData(ProjectPriceMetadata.InnerTitle);
+                    var coveredVerandaTitle = getData(ProjectPriceMetadata.CoveredVerandaTitle);
+                    var openVerandaTitle = getData(ProjectPriceMetadata.OpenVerandaTitle);
+                    var terasseTitle = getData(ProjectPriceMetadata.TerasseTitle);
+                    var plotTitle = getData(ProjectPriceMetadata.PlotTitle);
+                    var generalUsageTitle = getData(ProjectPriceMetadata.GeneralUsageTitle);
+                    var storageTitle = getData(ProjectPriceMetadata.StorageTitle);
+                    var totalAreaHeader = getData(ProjectPriceMetadata.TotalAreaHeader);
+                    var poolTitle = getData(ProjectPriceMetadata.PoolTitle);
+                    var parkinTitle = getData(ProjectPriceMetadata.ParkinTitle);
+                    var priceHeader = getData(ProjectPriceMetadata.PriceHeader);
+                    var m2Title = getData(ProjectPriceMetadata.M2Title);
+                    var vat = getData(ProjectPriceMetadata.VATHeader);
+                    var cityLabel = getData(ProjectPriceMetadata.CityName);
+                    var regionName = getData(ProjectPriceMetadata.RegionName);
+                    var stageLabel = getData(ProjectPriceMetadata.StageName);
+                    var toSeaName = getData(ProjectPriceMetadata.ToSeaName);
+                    var priceFromName = getData(ProjectPriceMetadata.PriceFromName);
+                    var completedConstructionName = getData(ProjectPriceMetadata.CompletedConstructionName);
+                    var yesWord = getData(ProjectPriceMetadata.IBP);
+                    var isLtRent = inputData.PromotionType?.Value == ((int)PromotionType.LtRent);
 
 
-            var _empty = string.Empty;
-            var flats = RetriveFlats(inputData);
-            var flatsType = new Lazy<Dictionary<Guid, string>>(() =>
-             {
-                 var typeGuid = flats
-                 .Select(x => x.GetAttributeValue<EntityReference>("sl_property_typeid"))
-                 .Where(x => x != null);
-                 var flatFilter = string.Join(_empty, typeGuid.Select(x => $"<value>{x.Id}</value>"));
-                 var query = $@"<fetch no-lock='true'>
+                    var _empty = string.Empty;
+                    var flats = RetriveFlats(inputData.PromotionType?.Value, project.Id);
+                    var flatsType = new Lazy<Dictionary<Guid, string>>(() =>
+                     {
+                         var typeGuid = flats
+                         .Select(x => x.GetAttributeValue<EntityReference>("sl_property_typeid"))
+                         .Where(x => x != null);
+                         var flatFilter = string.Join(_empty, typeGuid.Select(x => $"<value>{x.Id}</value>"));
+                         var query = $@"<fetch no-lock='true'>
                                <entity name='sl_property_type'>
                                  <attribute name='sl_name' />
                                  <filter type='and'>
@@ -94,69 +100,69 @@ namespace SoftLine.ActionPlugins.PrintForms
                                  </link-entity>
                                </entity>
                              </fetch>";
-                 return _crmService.RetrieveMultiple(new FetchExpression(query))
-                 .Entities
-                 .GroupBy(x => x.Id)
-                 .ToDictionary(x => x.Key, y =>
-                 {
-                     var value = y.FirstOrDefault();
-                     return value.GetValue<string>("ad.sl_name") ?? value.GetValue<string>("sl_name");
-                 });
-             });
+                         return _crmService.RetrieveMultiple(new FetchExpression(query))
+                         .Entities
+                         .GroupBy(x => x.Id)
+                         .ToDictionary(x => x.Key, y =>
+                         {
+                             var value = y.FirstOrDefault();
+                             return value.GetValue<string>("ad.sl_name") ?? value.GetValue<string>("sl_name");
+                         });
+                     });
 
-            var emptyList =  new List<string>();
-            List<string> flatValues(string attr, bool isNeeded = true)
-            {
-                if (!isNeeded) return emptyList;
-                return flats
-                   .Select(x =>
-                   {
-                       return x.FormattedValues.Contains(attr)
-                       ? x.FormattedValues[attr]
-                       : x.Attributes.ContainsKey(attr) ? x[attr].ToString() : default;
-                   })
-                   .ToList();
-            }
+                    var emptyList = new List<string>();
+                    List<string> flatValues(string attr, bool isNeeded = true)
+                    {
+                        if (!isNeeded) return emptyList;
+                        return flats
+                           .Select(x =>
+                           {
+                               return x.FormattedValues.Contains(attr)
+                               ? x.FormattedValues[attr]
+                               : x.Attributes.ContainsKey(attr) ? x[attr].ToString() : default;
+                           })
+                           .ToList();
+                    }
 
-            var ibp = new Lazy<List<string>>(() =>
-            flats.Select(x => x.GetAttributeValue<bool>("sl_ibpbit") ? yesWord : string.Empty)
-            .ToList());
+                    var ibp = new Lazy<List<string>>(() =>
+                    flats.Select(x => x.GetAttributeValue<bool>("sl_ibpbit") ? yesWord : string.Empty)
+                    .ToList());
 
-            var vatsValue = isLtRent
-                ? Enumerable.Repeat(yesWord, flats.Count).ToList()
-                : emptyList;
-            var isWithId = project.GetAttributeValue<bool>("sl_idbit");
-            var isFloor = project.GetAttributeValue<bool>("sl_foorbit");
-            var isType = project.GetAttributeValue<bool>("sl_typebit");
-            var isBed = project.GetAttributeValue<bool>("sl_bedbit");
-            var isIndoor = project.GetAttributeValue<bool>("sl_indoorbit");
-            var isCovver = project.GetAttributeValue<bool>("sl_covverbit");
-            var isUncovver = project.GetAttributeValue<bool>("sl_uncovverbit");
-            var isRoofTerrace = project.GetAttributeValue<bool>("sl_roof_terracebit");
-            var isPlot = project.GetAttributeValue<bool>("sl_plotbit");
-            var isCommon = project.GetAttributeValue<bool>("sl_commonbit");
-            var isStorage = project.GetAttributeValue<bool>("sl_storagebit");
-            var isTotal = project.GetAttributeValue<bool>("sl_total_areabit");
-            var isPoolb = project.GetAttributeValue<bool>("sl_poolbit");
-            var isParking = project.GetAttributeValue<bool>("sl_parkingbit");
-            var isPrice = project.GetAttributeValue<bool>("sl_pricebit");
+                    var vatsValue = isLtRent
+                        ? Enumerable.Repeat(yesWord, flats.Count).ToList()
+                        : emptyList;
+                    var isWithId = project.GetAttributeValue<bool>("sl_idbit");
+                    var isFloor = project.GetAttributeValue<bool>("sl_foorbit");
+                    var isType = project.GetAttributeValue<bool>("sl_typebit");
+                    var isBed = project.GetAttributeValue<bool>("sl_bedbit");
+                    var isIndoor = project.GetAttributeValue<bool>("sl_indoorbit");
+                    var isCovver = project.GetAttributeValue<bool>("sl_covverbit");
+                    var isUncovver = project.GetAttributeValue<bool>("sl_uncovverbit");
+                    var isRoofTerrace = project.GetAttributeValue<bool>("sl_roof_terracebit");
+                    var isPlot = project.GetAttributeValue<bool>("sl_plotbit");
+                    var isCommon = project.GetAttributeValue<bool>("sl_commonbit");
+                    var isStorage = project.GetAttributeValue<bool>("sl_storagebit");
+                    var isTotal = project.GetAttributeValue<bool>("sl_total_areabit");
+                    var isPoolb = project.GetAttributeValue<bool>("sl_poolbit");
+                    var isParking = project.GetAttributeValue<bool>("sl_parkingbit");
+                    var isPrice = project.GetAttributeValue<bool>("sl_pricebit");
 
-            var types = isType ? emptyList : flats.Select(x =>
-            {
-                var typeRef = x.GetAttributeValue<EntityReference>("sl_property_typeid");
-                if (Language.English.Equals(inputData.Language))
-                    return typeRef?.Name;
-                return typeRef is null ? default : flatsType.Value[typeRef.Id];
-            });
-            var poolData = isPoolb ? GetPoolData(inputData, flats) : emptyList; 
-            var minPrice = decimal.Zero;
-            var prices = isPrice ? RetriveListings(inputData, flats, getData, out minPrice) : emptyList;
+                    var types = isType ? emptyList : flats.Select(x =>
+                    {
+                        var typeRef = x.GetAttributeValue<EntityReference>("sl_property_typeid");
+                        if (Language.English.Equals(inputData.Language))
+                            return typeRef?.Name;
+                        return typeRef is null ? default : flatsType.Value[typeRef.Id];
+                    });
+                    var poolData = isPoolb ? GetPoolData(inputData, flats) : emptyList;
+                    var minPrice = decimal.Zero;
+                    var prices = isPrice ? RetriveListings(inputData, flats, getData, out minPrice) : emptyList;
 
-            var flatsWithPrice = flats
-                .Where(x => x.GetAttributeValue<OptionSetValue>("sl_sale_statuscode")?.Value == (int)ShortRentSTRentStatus.ForRent);
+                    var flatsWithPrice = flats
+                        .Where(x => x.GetAttributeValue<OptionSetValue>("sl_sale_statuscode")?.Value == (int)ShortRentSTRentStatus.ForRent);
 
-            var flatColumns = new[]
-            {
+                    var flatColumns = new[]
+                    {
                 new FlatTableColumn("№", _empty, flatValues("sl_number")),
                 new FlatTableColumn("IBP",_empty, isLtRent ? ibp.Value : emptyList, isLtRent),
                 new FlatTableColumn("ID",_empty, flatValues("sl_id", isWithId), isWithId),
@@ -175,87 +181,87 @@ namespace SoftLine.ActionPlugins.PrintForms
                 new FlatTableColumn(parkinTitle,_empty, flatValues("sl_parking", isParking), isParking),
                 new FlatTableColumn(priceHeader,_empty, prices, isPrice),
                 new FlatTableColumn(vat, _empty, vatsValue , isLtRent)
-            };
+             };
 
-            var columns = flatColumns
-                .Where(x => x.IsVisibility && x.Value.Length > 0)
-                .ToArray();
+                    var columns = flatColumns
+                        .Where(x => x.IsVisibility && x.Value.Length > 0)
+                        .ToArray();
 
-            var rowsLenght = columns.Length == default ? default : columns.Max(x => x.Value.Length);
-            var cels = new string[columns.Length, rowsLenght];
-            for (var i = 0; i < columns.Length; i++)
-            {
-                var values = columns[i].Value;
-                for (var j = 0; j < rowsLenght; j++)
-                {
-                    cels[i, j] = values[j];
-                }
-            }
+                    var rowsLenght = columns.Length == default ? default : columns.Max(x => x.Value.Length);
+                    var cels = new string[columns.Length, rowsLenght];
+                    for (var i = 0; i < columns.Length; i++)
+                    {
+                        var values = columns[i].Value;
+                        for (var j = 0; j < rowsLenght; j++)
+                        {
+                            cels[i, j] = values[j];
+                        }
+                    }
 
-            var table = new List<List<string>>(columns.Length);
-            for (var i = 0; i < rowsLenght; i++)
-            {
-                var rows = new List<string>(rowsLenght);
-                for (var j = 0; j < columns.Length; j++)
-                {
-                    rows.Add(cels[j, i]);
-                }
-                table.Add(rows);
-            }
-            var mainTable = new MainTable()
-            {
-                Flats = new List<List<List<string>>>()
-            };
-            mainTable.Flats.Add(table);
-            var minPriceStr = minPrice == default ? string.Empty : minPrice.ToString("0.##");
-            var printForm = new ProjectPrintForm()
-            {
-                ObjectName = project.GetAttributeValue<string>("sl_name"),
-                MajorBenefits = project.GetValue<string>("projectlanguage.sl_major_benefit") ?? project.GetAttributeValue<string>("sl_major_benefit"),
-                Details = new List<Detail>()
-                {
+                    var table = new List<List<string>>(columns.Length);
+                    for (var i = 0; i < rowsLenght; i++)
+                    {
+                        var rows = new List<string>(rowsLenght);
+                        for (var j = 0; j < columns.Length; j++)
+                        {
+                            rows.Add(cels[j, i]);
+                        }
+                        table.Add(rows);
+                    }
+                    var mainTable = new MainTable()
+                    {
+                        Flats = new List<List<List<string>>>()
+                    };
+                    mainTable.Flats.Add(table);
+                    var minPriceStr = minPrice == default ? string.Empty : minPrice.ToString("0.##");
+                    var printForm = new ProjectPrintForm()
+                    {
+                        ObjectName = project.GetAttributeValue<string>("sl_name"),
+                        MajorBenefits = project.GetValue<string>("projectlanguage.sl_major_benefit") ?? project.GetAttributeValue<string>("sl_major_benefit"),
+                        Details = new List<Detail>()
+                 {
                     new Detail(cityLabel, project.GetValue<string>("city.sl_name")),
                     new Detail(regionName, project.GetValue<string>("area.sl_name")),
                     new Detail(stageLabel, project.FormattedValues.Contains("sl_stagecode") ? project.FormattedValues["sl_stagecode"] : default),
                     new Detail(toSeaName, $"{project.GetAttributeValue<decimal>("sl_distance_sea"):0.##} m"),
                     new Detail(priceFromName, minPriceStr),
                     new Detail(completedConstructionName, project.GetAttributeValue<DateTime?>("sl_completion_date")?.ToString("dd.MM.yyyy")),
-                },
-                Preview = pictureBase64,
-                Metadata = new ProjectPriceForm.Model.Metadata()
-                {
-                    WithLogo = inputData.IsWithLogo,
-                    MainTableColumns = columns
-                    .Select(x => new MainTableColumn(x.Header, x.Dimension))
-                    .ToList()
-                },
-                DetailsLabel = getData(ProjectPriceMetadata.DetailsLabel),
-                MajorBenefitsLabel = getData(ProjectPriceMetadata.MainBenefitsName),
-                PhoneLabel = getData(ProjectPriceMetadata.PhoneLabel),
-                FaxLabel = getData(ProjectPriceMetadata.FaxLabel),
-                EmailLabel = getData(ProjectPriceMetadata.EmailLabel),
-                Tagline = getData(ProjectPriceMetadata.Tagline),
-                MainTable = new List<MainTable>()
-                {
+                 },
+                        Preview = pictureBase64,
+                        Metadata = new ProjectPriceForm.Model.Metadata()
+                        {
+                            WithLogo = inputData.IsWithLogo,
+                            MainTableColumns = columns
+                            .Select(x => new MainTableColumn(x.Header, x.Dimension))
+                            .ToList()
+                        },
+                        DetailsLabel = getData(ProjectPriceMetadata.DetailsLabel),
+                        MajorBenefitsLabel = getData(ProjectPriceMetadata.MainBenefitsName),
+                        PhoneLabel = getData(ProjectPriceMetadata.PhoneLabel),
+                        FaxLabel = getData(ProjectPriceMetadata.FaxLabel),
+                        EmailLabel = getData(ProjectPriceMetadata.EmailLabel),
+                        Tagline = getData(ProjectPriceMetadata.Tagline),
+                        MainTable = new List<MainTable>()
+                 {
                     mainTable
-                }
-            };
-            var account = new Lazy<Entity>(RetriveAccount);
-            if (inputData.IsWithLogo && account.Value != default)
-            {
-                printForm.Email = account.Value.GetAttributeValue<string>("emailaddress1");
-                printForm.Fax = account.Value.GetAttributeValue<string>("fax");
-                printForm.WebsiteUrl = account.Value.GetAttributeValue<string>("websiteurl");
-                printForm.Phone = account.Value.GetAttributeValue<string>("telephone1");
-                printForm.Address = account.Value.GetAttributeValue<string>("sl_address");
-            }
-
-            return printForm;
+                 }
+                    };
+                    var account = new Lazy<Entity>(RetriveAccount);
+                    if (inputData.IsWithLogo && account.Value != default)
+                    {
+                        printForm.Email = account.Value.GetAttributeValue<string>("emailaddress1");
+                        printForm.Fax = account.Value.GetAttributeValue<string>("fax");
+                        printForm.WebsiteUrl = account.Value.GetAttributeValue<string>("websiteurl");
+                        printForm.Phone = account.Value.GetAttributeValue<string>("telephone1");
+                        printForm.Address = account.Value.GetAttributeValue<string>("sl_address");
+                    }
+                    return printForm;
+                }).ToList();
         }
 
-        private Entity RetriveLinkProjectData(InputPrintFormData inputData)
+        private DataCollection<Entity> RetriveLinkProjectData(InputPrintFormData inputData)
         {
-            var query = $@"<fetch no-lock='true' top='1' >
+            var query = $@"<fetch no-lock='true' >
                            <entity name='sl_project' >
                              <attribute name='sl_name' />
                              <attribute name='sl_stagecode' />
@@ -277,9 +283,11 @@ namespace SoftLine.ActionPlugins.PrintForms
                              <attribute name='sl_poolbit' />
                              <attribute name='sl_parkingbit' />
                              <attribute name='sl_pricebit' />
-                             <filter type='and' >
-                               <condition attribute='sl_projectid' operator='eq' value='{inputData.TargetEntityRef.Id}' />
-                             </filter>
+                             <filter type='and'>
+                                <condition attribute='sl_projectid' operator='in'>
+                                 {string.Join(string.Empty, inputData.TargetEntityIds.Select(x => $"<value>{x}</value>"))} 
+                                </condition>
+                              </filter>
                              <link-entity name='sl_picture' from='sl_projectid' to='sl_projectid' link-type='outer' alias='picture' >
                                <attribute name='sl_url' />
                                <attribute name='sl_weight' />
@@ -304,8 +312,7 @@ namespace SoftLine.ActionPlugins.PrintForms
                            </entity>
                          </fetch>";
             return _crmService.RetrieveMultiple(new FetchExpression(query))
-                .Entities
-                .FirstOrDefault();
+                .Entities;
         }
 
         private Entity RetriveAccount()
@@ -327,7 +334,7 @@ namespace SoftLine.ActionPlugins.PrintForms
                 .FirstOrDefault();
         }
 
-        private DataCollection<Entity> RetriveFlats(InputPrintFormData inputData)
+        private DataCollection<Entity> RetriveFlats(int? promotionType, Guid projectid)
         {
             var attrs = new[]
             {
@@ -336,16 +343,16 @@ namespace SoftLine.ActionPlugins.PrintForms
                 "sl_common_area","sl_total_area", "sl_type_of_poolcode","sl_ibpbit","sl_id",
                 "sl_plot_size","sl_storage_size","sl_parking","sl_ltr_statusccode","sl_sale_statuscode"
             };
-            var filterCondition = inputData.PromotionType?.Value == (int)PromotionType.PurchaseProperty
+            var filterCondition = promotionType == (int)PromotionType.PurchaseProperty
                 ? "sl_sale_statuscode"
-                : inputData.PromotionType?.Value == (int)PromotionType.LtRent ? "sl_ltr_statusccode" : default;
+                : promotionType == (int)PromotionType.LtRent ? "sl_ltr_statusccode" : default;
             if (string.IsNullOrEmpty(filterCondition)) return new EntityCollection().Entities;
             var query = $@"<fetch no-lock='true' >
                    <entity name='sl_unit' >                         
                      {string.Join(string.Empty, attrs.Select(x => $"<attribute name='{x}' />"))}
                       <filter type='and' >
                         <condition attribute='{filterCondition}' operator='ne' value='588610000' />
-                        <condition attribute='sl_projectid' operator='eq' value='{inputData.TargetEntityRef.Id}' />
+                        <condition attribute='sl_projectid' operator='eq' value='{projectid}' />
                       </filter>
                     </entity>
                   </fetch>";

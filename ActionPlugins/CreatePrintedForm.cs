@@ -4,6 +4,7 @@ using SoftLine.ActionPlugins.SharePoint;
 using Newtonsoft.Json;
 using SoftLine.ActionPlugins.PrintForms;
 using SoftLine.ActionPlugins.PrintForms.ProjectPriceForm.Model;
+using System.Collections.Generic;
 
 namespace SoftLine.ActionPlugins
 {
@@ -20,7 +21,7 @@ namespace SoftLine.ActionPlugins
                 var inputData = new InputPrintFormData()
                 {
                     IsWithLogo = (bool)input["isWithLogo"],
-                    TargetEntityRef = input["data"] as EntityReference,
+                    TargetEntityIds = JsonConvert.DeserializeObject<Guid[]>(input["data"] as string),
                     PromotionType = input["promotionType"] as OptionSetValue,
                     Language = input["language"] as EntityReference,
                     Market = input["market"] as OptionSetValue,
@@ -40,13 +41,13 @@ namespace SoftLine.ActionPlugins
             }
         }
 
-        public ProjectPrintForm FormPrintForm(InputPrintFormData inputData, IOrganizationService service)
+        public List<ProjectPrintForm> FormPrintForm(InputPrintFormData inputData, IOrganizationService service)
         {
             var spData = Helper.GetInputDataForSp(service);
             using (var spClient = new SharePointClient(spData.Url, spData.Credentials))
             {
                 var constructor = new PrintFormConstructor(service, spClient);
-                return constructor.GetForm(inputData);
+                return constructor.GetForms(inputData);
             }
         }
     }

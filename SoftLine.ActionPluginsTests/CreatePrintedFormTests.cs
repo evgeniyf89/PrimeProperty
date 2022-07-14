@@ -45,9 +45,12 @@ namespace SoftLine.ActionPlugins.Tests
                 Language = new EntityReference("sl_language", new Guid("{a4523a24-20db-eb11-bacb-000d3a2c3636}")),
                 Market = new OptionSetValue(486160000),
                 PromotionType = new OptionSetValue(102690000),
-                TargetEntityRef = new EntityReference("sl_project", new Guid("28fc0ae5-70ba-ec11-9840-6045bd8c5aa5"))
+                TargetEntityIds = new[] {
+                    "b10d68db-b773-ec11-8941-002248818536", "af0d68db-b773-ec11-8941-002248818536",
+                    "7f0d68db-b773-ec11-8941-002248818536", "530d68db-b773-ec11-8941-002248818536",
+                    "e808fa32-cb0f-ec11-b6e6-0022488425d2" }.Select(x => new Guid(x)).ToArray()
             };
-            var tt = printFormConstructor.GetForm(inputData);
+            var tt = printFormConstructor.GetForms(inputData);
             var json = JsonConvert.SerializeObject(tt);
         }
 
