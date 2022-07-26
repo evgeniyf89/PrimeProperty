@@ -37,12 +37,33 @@ namespace SoftLine.ActionPlugins
                 }
                 context.OutputParameters["responce"] = JsonConvert.SerializeObject(new { IsError = false, Images = images });
             }
+            catch (WebException wex)
+            {
+                var response = wex.Response as HttpWebResponse;
+                if (response != null && (response.StatusCode == (HttpStatusCode)429 || response.StatusCode == (HttpStatusCode)503))
+                {
+                    context.OutputParameters["responce"] = JsonConvert.SerializeObject(new
+                    {
+                        IsError = true,
+                        Message = $"{wex.Message}\nwex\n{wex.InnerException?.Message}\n{wex.StackTrace}",
+                        RetryAfter = response.Headers["Retry-After"]
+                    });
+                }
+                else
+                {
+                    context.OutputParameters["responce"] = JsonConvert.SerializeObject(new
+                    {
+                        IsError = true,
+                        Message = $"{wex.Message}\nwex\n{wex.InnerException?.Message}\n{wex.StackTrace}"
+                    });
+                }
+            }
             catch (Exception ex)
             {
                 context.OutputParameters["responce"] = JsonConvert.SerializeObject(new
                 {
                     IsError = true,
-                    Message = $"{ex.Message}\n{ex.InnerException?.Message}\n{ex.StackTrace}"
+                    Message = $"{ex.Message}\n{ex.GetType().Name}\n{ex.InnerException?.Message}\n{ex.StackTrace}"
                 });
             }
         }
