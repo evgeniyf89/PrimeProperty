@@ -1,5 +1,6 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.Globalization;
 using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
@@ -213,11 +214,12 @@ namespace SoftLine.ActionPlugins.PrintForms
                         Flats = new List<List<List<string>>>()
                     };
                     mainTable.Flats.Add(table);
-                    var minPriceStr = minPrice == default ? string.Empty : minPrice.ToString("0.##");
+                    var minPriceStr = minPrice == default ? string.Empty : minPrice.ToString("N", new CultureInfo("en-US"));
+                    var majorBenefits = project.GetValue<string>("projectlanguage.sl_major_benefit") ?? project.GetAttributeValue<string>("sl_major_benefit");
                     var printForm = new ProjectPrintForm()
                     {
                         ObjectName = project.GetAttributeValue<string>("sl_name"),
-                        MajorBenefits = project.GetValue<string>("projectlanguage.sl_major_benefit") ?? project.GetAttributeValue<string>("sl_major_benefit"),
+                        MajorBenefits = FindFourParagraph(majorBenefits),
                         Details = new List<Detail>()
                  {
                     new Detail(cityLabel, project.GetValue<string>("city.sl_name")),
@@ -257,6 +259,23 @@ namespace SoftLine.ActionPlugins.PrintForms
                     }
                     return printForm;
                 }).ToList();
+        }
+
+        private string FindFourParagraph(string text)
+        {
+            if (string.IsNullOrEmpty(text)) return default;
+            var i = 0;
+            var paragraphIndex = 0;
+            var findWord = "</li>";
+            while (i < 4)
+            {
+                paragraphIndex = text.IndexOf(findWord, paragraphIndex);
+                if (paragraphIndex == -1)
+                    return text;
+                i++;
+                paragraphIndex += findWord.Length;
+            }
+            return text.Substring(0, paragraphIndex);
         }
 
         private DataCollection<Entity> RetriveLinkProjectData(InputPrintFormData inputData)
@@ -461,6 +480,7 @@ namespace SoftLine.ActionPlugins.PrintForms
             var priceSold = getData(ProjectPriceMetadata.Sold);
             var priceRented = getData(ProjectPriceMetadata.Rented);
             decimal? fromPrice = decimal.MaxValue;
+            var cultureInfo = new Lazy<CultureInfo>(() => new CultureInfo("en-US"));
             var prices = flats
                 .Select(x =>
                 {
@@ -476,7 +496,7 @@ namespace SoftLine.ActionPlugins.PrintForms
                             var startingPrice = listing?.GetAttributeValue<Money>("sl_sale_starting_price").Value;
                             if (fromPrice > startingPrice)
                                 fromPrice = startingPrice;
-                            return startingPrice?.ToString("0.##");
+                            return startingPrice?.ToString("N", cultureInfo.Value);
                         }
                     }
                     else if (isLtRent)
@@ -489,7 +509,7 @@ namespace SoftLine.ActionPlugins.PrintForms
                             var startingPrice = listing?.GetAttributeValue<Money>("sl_long_rent").Value;
                             if (fromPrice > startingPrice)
                                 fromPrice = startingPrice;
-                            return startingPrice?.ToString("0.##");
+                            return startingPrice?.ToString("N", cultureInfo.Value);
                         }
                     }
                     return default;

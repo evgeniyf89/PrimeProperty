@@ -16,6 +16,7 @@ using System.Collections.Generic;
 using System.Drawing;
 using System.Drawing.Drawing2D;
 using System.Drawing.Imaging;
+using System.Globalization;
 using System.IO;
 using System.Linq;
 using System.Net;
@@ -105,7 +106,6 @@ namespace SoftLine.ActionPlugins.Tests
         [TestMethod()]
         public void RetrivePictures()
         {
-
             var tt = new ImageRecipient();
             var obj = new EntityReference("sl_project", new Guid("{30824c04-2cdb-eb11-bacb-000d3a2c32dc}"));
             var formatRef = new Entity("sl_upload_format", new Guid("{5A616E8C-36E6-EB11-BACB-000D3A470D6F}"));

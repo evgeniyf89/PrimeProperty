@@ -36,6 +36,14 @@ namespace SoftLine.ActionPlugins.Tests
         [TestMethod()]
         public void RetrivePrintedFormTest()
         {
+
+            var str = "<li>距著名的达索迪桉树公园的沙滩700米；</li><li>利马索尔最受欢迎的地区之一；</li>" +
+                "<li>室外游泳池和带顶停车场；</li><li>顶级标准装修：拼花地板、高天花板（3.2米）、大理石卫生间、安全大门、" +
+                "热铝窗框、顶级标准嵌入式家具和卫生洁具</li><li>标准的水地板采暖、VRV空调；</li><li>顶层套房享受私人屋顶露台和游泳池；</li></ul>";
+            var ss = FindFourParagraph(str);
+
+
+
             var spData = Helper.GetInputDataForSp(_service);
             var spService = new SharePointClient(spData.Url, spData.Credentials);
             var printFormConstructor = new PrintFormConstructor(_service, spService);
@@ -54,11 +62,28 @@ namespace SoftLine.ActionPlugins.Tests
             var json = JsonConvert.SerializeObject(tt);
         }
 
+        private string FindFourParagraph(string text)
+        {
+            if (string.IsNullOrEmpty(text)) return default;
+            var i = 0;
+            var paragraphIndex = 0;
+            var findWord = "</li>";
+            while (i < 4)
+            {
+                paragraphIndex = text.IndexOf(findWord, paragraphIndex);
+                if (paragraphIndex == -1)
+                    return text;
+                i++;
+                paragraphIndex += findWord.Length;
+            }
+            return text.Substring(0, paragraphIndex);
+        }
+
         [TestMethod()]
         public void GetPrintFormSettingsTest()
         {
 
         }
-        
+
     }
 }
