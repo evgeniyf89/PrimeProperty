@@ -19,8 +19,7 @@ Softline.UploadFormat.Buttons = {
                         const updateImages = Softline.UploadFormat.Buttons.UpdateImages;
                         const format = updateImages.getUploadFormat(fctx);
                         const objectsWithPicture = await updateImages.retriveAllObjects(format);
-                        let updateCount = 0;
-                        let errorCount = 0;
+                        let updateCount = 0;                       
                         const count = objectsWithPicture.length;
                         for (let i = 0; i < count; i++) {
                             const object = objectsWithPicture[i];
@@ -55,12 +54,19 @@ Softline.UploadFormat.Buttons = {
                 : `${format.sl_entity}id`;
             let page = 1;
             let allObjects = [];
+            var now = new Date();
+            now.setDate(now.getDate() - 5);         
             while (true) {
                 const query =
                     `<fetch distinct='true' no-lock='true' page='${page} ' >
                           <entity name='${format.sl_entity}' >
                           <attribute name='${format.sl_entity}id' />                   
-                          <link-entity name='sl_picture' from='${from}' to='${format.sl_entity}id' link-type='inner' alias='aa' />                    
+                            <link-entity name='sl_picture' from='${from}' to='${format.sl_entity}id' link-type='inner' alias='aa'>
+                              <filter>
+                                <condition attribute='createdon' operator='on-or-before' value='${now.format("MM-dd-yyyy")}' />
+                                <condition attribute='sl_upload_formatid' operator='eq' value='${format.sl_upload_formatid}' />
+                              </filter>
+                            </link-entity>
                           </entity>
                     </fetch>`;
                 const response = await Xrm.WebApi.retrieveMultipleRecords(
