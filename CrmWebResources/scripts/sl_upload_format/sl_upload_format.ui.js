@@ -54,19 +54,12 @@ Softline.UploadFormat.Buttons = {
                 : `${format.sl_entity}id`;
             let page = 1;
             let allObjects = [];
-            var now = new Date();
-            now.setDate(now.getDate() - 5);         
             while (true) {
                 const query =
                     `<fetch distinct='true' no-lock='true' page='${page} ' >
                           <entity name='${format.sl_entity}' >
                           <attribute name='${format.sl_entity}id' />                   
-                            <link-entity name='sl_picture' from='${from}' to='${format.sl_entity}id' link-type='inner' alias='aa'>
-                              <filter>
-                                <condition attribute='createdon' operator='on-or-before' value='${now.format("MM-dd-yyyy")}' />
-                                <condition attribute='sl_upload_formatid' operator='eq' value='${format.sl_upload_formatid}' />
-                              </filter>
-                            </link-entity>
+                            <link-entity name='sl_picture' from='${from}' to='${format.sl_entity}id' link-type='inner' alias='aa' /> 
                           </entity>
                     </fetch>`;
                 const response = await Xrm.WebApi.retrieveMultipleRecords(

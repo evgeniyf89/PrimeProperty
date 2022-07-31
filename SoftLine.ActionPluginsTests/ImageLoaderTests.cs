@@ -107,11 +107,20 @@ namespace SoftLine.ActionPlugins.Tests
         public void RetrivePictures()
         {
             var tt = new ImageRecipient();
-            var obj = new EntityReference("sl_project", new Guid("{30824c04-2cdb-eb11-bacb-000d3a2c32dc}"));
-            var formatRef = new Entity("sl_upload_format", new Guid("{5A616E8C-36E6-EB11-BACB-000D3A470D6F}"));
+            var obj = new EntityReference("sl_unit", new Guid("{22dd286a-8974-ec11-8941-002248818089}"));
+            var formatRef = new Entity("sl_upload_format", new Guid("{e40e2827-36e6-eb11-bacb-000d3a470d6f}"));
             formatRef["sl_type"] = new OptionSetValue(102690000);
             var pictures = tt.RetrivePictures(obj, formatRef, _service);
-
+            var dateNow = DateTime.Now;
+            var minus5Days = dateNow.AddDays(-5);
+            var noFormatPicture = pictures
+                     .Where(x => x.GetAttributeValue<EntityReference>("sl_upload_formatid") != null)
+                     .ToArray();
+            var old = noFormatPicture.Any(x => (DateTime)x["createdon"] < minus5Days);
+            if (noFormatPicture.Length > 0 && !noFormatPicture.Any(x => (DateTime)x["createdon"] < minus5Days))
+            {             
+                return;
+            }
             var groupUrls = pictures
                     .Where(x => x.GetAttributeValue<EntityReference>("sl_upload_formatid") is null)
                     .GroupBy(x => x.FormattedValues["sl_typecode"])

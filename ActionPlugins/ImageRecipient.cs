@@ -27,11 +27,21 @@ namespace SoftLine.ActionPlugins
                 var serviceFactory = (IOrganizationServiceFactory)serviceProvider.GetService(typeof(IOrganizationServiceFactory));
                 var service = serviceFactory.CreateOrganizationService(null);
                 var pictures = RetrivePictures(regardingobjectRef, format, service);
+                var dateNow = DateTime.Now;
+                var minus5Days = dateNow.AddDays(-5);
+                var formatPicture = pictures
+                    .Where(x => x.GetAttributeValue<EntityReference>("sl_upload_formatid") != null)
+                    .ToArray();
+                if (formatPicture.Length > 0 && !formatPicture.Any(x => (DateTime)x["createdon"] < minus5Days))
+                {
+                    context.OutputParameters["responce"] = JsonConvert.SerializeObject(new { IsError = false, Images = new List<Images>() });
+                    return;
+                }
                 var groupUrls = pictures
                      .Where(x => x.GetAttributeValue<EntityReference>("sl_upload_formatid") is null)
                      .GroupBy(x => x.FormattedValues["sl_typecode"]);
                 var images = GetFileAndDeleteFolderInSp(groupUrls, format, service);
-                foreach (var pic in pictures.Where(x => x.GetAttributeValue<EntityReference>("sl_upload_formatid") != null))
+                foreach (var pic in formatPicture)
                 {
                     service.Delete(pic.LogicalName, pic.Id);
                 }
@@ -97,6 +107,7 @@ namespace SoftLine.ActionPlugins
                              <attribute name='sl_url' />
                              <attribute name='sl_typecode' />
                              <attribute name='sl_upload_formatid' />
+                             <attribute name='createdon' />
                              <filter>
                                <condition attribute='sl_typecode' operator='in' >
                                 {string.Join("", typecodesFilter.Select(x => $"<value>{x}</value>"))}
