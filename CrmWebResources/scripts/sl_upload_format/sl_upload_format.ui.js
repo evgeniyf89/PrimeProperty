@@ -19,13 +19,20 @@ Softline.UploadFormat.Buttons = {
                         const updateImages = Softline.UploadFormat.Buttons.UpdateImages;
                         const format = updateImages.getUploadFormat(fctx);
                         const objectsWithPicture = await updateImages.retriveAllObjects(format);
-                        let updateCount = 0;                       
+                        let updateCount = 0;
                         const count = objectsWithPicture.length;
+
                         for (let i = 0; i < count; i++) {
                             const object = objectsWithPicture[i];
                             object.id = object[`${format.sl_entity}id`];
                             object.entityType = format.sl_entity;
-                            const resFormat = await updateImages.updateFormat(object, format);
+                            let resFormat;
+                            try {
+                                resFormat = await updateImages.updateFormat(object, format);
+                            } catch (ex) {
+                                console.error(ex, object);
+                                continue;
+                            }
                             if (!resFormat.IsError) {
                                 ++updateCount;
                             } else {
@@ -57,7 +64,7 @@ Softline.UploadFormat.Buttons = {
             while (true) {
                 const query =
                     `<fetch distinct='true' no-lock='true' page='${page} ' >
-                          <entity name='${format.sl_entity}' >
+                          <entity name='${format.sl_entity}' >                          
                           <attribute name='${format.sl_entity}id' />                   
                             <link-entity name='sl_picture' from='${from}' to='${format.sl_entity}id' link-type='inner' alias='aa' /> 
                           </entity>
@@ -87,6 +94,24 @@ Softline.UploadFormat.Buttons = {
             const images = answer.Images;
             if (!images || images.length === 0) {
                 return answer
+            }
+            
+            if (answer.IsMore) {
+                let skip = answer.Skip;
+                while (answer.IsMore) {
+                    const whileRequest = updateImages.retriveImageRequest(entity, format, skip);
+                    const whileResponce = await Xrm.WebApi.online.execute(whileRequest);
+                    const whileJson = await whileResponce.json();
+                    const whileAnswer = JSON.parse(whileJson.responce);
+                    if (whileAnswer.IsError) {
+                        console.error(answer.Message);
+                        return whileAnswer;
+                    }
+                    images.push(whileAnswer.Images);
+                    skip = whileAnswer.Skip;
+                    if (!whileAnswer.IsMore)
+                        break;
+                }
             }
             const withWatermark = entity.sl_exclusivebit && !entity.sl_exclusivebit ? true : false;
             const WATERMARK = "/WebResources/sl_watermark_big.png";
@@ -141,7 +166,7 @@ Softline.UploadFormat.Buttons = {
             return res;
         },
 
-        retriveImageRequest: (reference, formatImage) => {
+        retriveImageRequest: (reference, formatImage, skip = 0) => {
             return {
                 regardingobject: {
                     "@odata.type": `Microsoft.Dynamics.CRM.${reference.entityType}`,
@@ -153,6 +178,7 @@ Softline.UploadFormat.Buttons = {
                     "sl_name": formatImage.sl_name,
                     "sl_type": formatImage.sl_type
                 },
+                skip: skip,
                 getMetadata: function () {
                     return {
                         boundParameter: null,
@@ -165,6 +191,10 @@ Softline.UploadFormat.Buttons = {
                                 typeName: `${formatImage.entityType}`,
                                 structuralProperty: 5,
                             },
+                            skip: {
+                                typeName: "Edm.Int32",
+                                structuralProperty: 1
+                            }
                         },
                         operationType: 0,
                         operationName: "sl_retrive_images",

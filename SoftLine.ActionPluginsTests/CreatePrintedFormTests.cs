@@ -1,9 +1,12 @@
 ﻿using Microsoft.VisualStudio.TestTools.UnitTesting;
 using Microsoft.Xrm.Sdk;
 using Microsoft.Xrm.Sdk.Client;
+using Microsoft.Xrm.Tooling.Connector;
 using Newtonsoft.Json;
 using SoftLine.ActionPlugins.PrintForms;
+using SoftLine.ActionPlugins.PrintForms.MasterPrice;
 using SoftLine.ActionPlugins.PrintForms.Metadata;
+using SoftLine.ActionPlugins.ProjectPriceForm.PrintForms;
 using SoftLine.ActionPlugins.SharePoint;
 using System;
 using System.Collections.Generic;
@@ -23,14 +26,18 @@ namespace SoftLine.ActionPlugins.Tests
         private readonly IOrganizationService _service;
         public CreatePrintedFormTests()
         {
-            _printedForm = new CreatePrintedForm();
-            var crmSoap = "https://ppcrm1.api.crm4.dynamics.com/XRMServices/2011/Organization.svc";
-            var uri = new Uri(crmSoap);
-            var credentials = new ClientCredentials();
-            credentials.UserName.Password = "SuperMuper!!";
-            credentials.UserName.UserName = "test.crm@prime-property.com";
-            ServicePointManager.SecurityProtocol = System.Net.SecurityProtocolType.Tls12;
-            _service = new OrganizationServiceProxy(uri, null, credentials, null);
+            var str = @"AuthType=Office365;Url=https://ppcrm1.crm4.dynamics.com;Username=subbotin.a@prime-property.com;Password=Port-0712";
+            _service = new CrmServiceClient(str);           
+
+
+            //_printedForm = new CreatePrintedForm();
+            //var crmSoap = "https://ppcrm1.api.crm4.dynamics.com/XRMServices/2011/Organization.svc";
+            //var uri = new Uri(crmSoap);
+            //var credentials = new ClientCredentials();
+            //credentials.UserName.Password = "Port-0712";
+            //credentials.UserName.UserName = "subbotin.a@prime-property.com";
+            //ServicePointManager.SecurityProtocol = System.Net.SecurityProtocolType.Tls12;
+            //_service = new OrganizationServiceProxy(uri, null, credentials, null);
         }
 
         [TestMethod()]
@@ -46,7 +53,7 @@ namespace SoftLine.ActionPlugins.Tests
 
             var spData = Helper.GetInputDataForSp(_service);
             var spService = new SharePointClient(spData.Url, spData.Credentials);
-            var printFormConstructor = new PrintFormConstructor(_service, spService);
+            var printFormConstructor = new ProjectPrintFormConstructor(_service, spService);
             var inputData = new InputPrintFormData()
             {
                 IsWithLogo = true,
@@ -80,10 +87,24 @@ namespace SoftLine.ActionPlugins.Tests
         }
 
         [TestMethod()]
-        public void GetPrintFormSettingsTest()
+        public void PGetMasterPintFormTest()
         {
-
+            var inputData = new InputPrintFormData()
+            {
+                IsWithLogo = true,
+                Language = new EntityReference("sl_language", new Guid("{a4523a24-20db-eb11-bacb-000d3a2c3636}")),
+                Market = new OptionSetValue(486160000),
+                PromotionType = new OptionSetValue(102690000),
+                TargetEntityIds = new[] {
+                    "b10d68db-b773-ec11-8941-002248818536", "af0d68db-b773-ec11-8941-002248818536",
+                    "7f0d68db-b773-ec11-8941-002248818536", "530d68db-b773-ec11-8941-002248818536",
+                    "e808fa32-cb0f-ec11-b6e6-0022488425d2" }.Select(x => new Guid(x)).ToArray()
+            };
+            var spData = Helper.GetInputDataForSp(_service);
+            var spService = new SharePointClient(spData.Url, spData.Credentials);
+            var printForm = new MasterFormConstructor(_service,spService);
+            var tt =printForm.GetForms(inputData);
+            var json = JsonConvert.SerializeObject(tt);
         }
-
     }
 }

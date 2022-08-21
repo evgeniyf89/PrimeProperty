@@ -5,6 +5,7 @@ using Newtonsoft.Json;
 using SoftLine.ActionPlugins.PrintForms;
 using SoftLine.ActionPlugins.PrintForms.ProjectPriceForm.Model;
 using System.Collections.Generic;
+using SoftLine.ActionPlugins.ProjectPriceForm.PrintForms;
 
 namespace SoftLine.ActionPlugins
 {
@@ -27,7 +28,7 @@ namespace SoftLine.ActionPlugins
                     Market = input["market"] as OptionSetValue,
                 };
 
-                var printForm = FormPrintForm(inputData, service);
+                var printForm = СreatePrintForm(inputData, service);
                
                 context.OutputParameters["responce"] = JsonConvert.SerializeObject(printForm);
             }
@@ -41,14 +42,14 @@ namespace SoftLine.ActionPlugins
             }
         }
 
-        public List<ProjectPrintForm> FormPrintForm(InputPrintFormData inputData, IOrganizationService service)
+        public List<ProjectPrintForm> СreatePrintForm(InputPrintFormData inputData, IOrganizationService service)
         {
-            var spData = Helper.GetInputDataForSp(service);
+            var spData = Helper.GetInputDataForSp(service);           
             using (var spClient = new SharePointClient(spData.Url, spData.Credentials))
             {
-                var constructor = new PrintFormConstructor(service, spClient);
+                var constructor = new ProjectPrintFormConstructor(service, spClient);
                 return constructor.GetForms(inputData);
-            }
+            }           
         }
     }
 }

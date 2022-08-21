@@ -38,3 +38,5 @@ E:\Projects\PrimeProperty\ActionPlugins\obj\Debug\SoftLine.ActionPlugins.csproj.
 E:\Projects\PrimeProperty\ActionPlugins\obj\Debug\SoftLine.ActionPlugins.csproj.CopyComplete
 E:\Projects\PrimeProperty\ActionPlugins\obj\Debug\ActionPlugins.dll
 E:\Projects\PrimeProperty\ActionPlugins\obj\Debug\ActionPlugins.pdb
+E:\Projects\PrimeProperty\ActionPlugins\bin\Debug\System.ValueTuple.dll
+E:\Projects\PrimeProperty\ActionPlugins\bin\Debug\System.ValueTuple.xml

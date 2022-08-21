@@ -6,7 +6,7 @@ using System.Threading.Tasks;
 
 namespace SoftLine.ActionPlugins.PrintForms.Metadata
 {
-    public enum ProjectPriceMetadata
+    public enum FormMetadata
     {
         DetailsLabel = 01001,
         ReportName = 01003,
@@ -39,11 +39,13 @@ namespace SoftLine.ActionPlugins.PrintForms.Metadata
         PhoneLabel = 01037,
         FaxLabel = 01038,
         EmailLabel = 01039,
-        Tagline = 01040,        
+        Tagline = 01040,
+        FormName = 01059,
+        SellerNotification = 01060,
     }
     public static class ProjectPriceMetadataExtensions
     {
-        public static string StringValue(this ProjectPriceMetadata projectPriceMetadata)
+        public static string StringValue(this FormMetadata projectPriceMetadata)
         {
             return $"0{(int)projectPriceMetadata}";
         }

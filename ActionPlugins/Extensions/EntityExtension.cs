@@ -18,5 +18,12 @@ namespace SoftLine.ActionPlugins.Extensions
                 ? (T)(alias.Value)
                 : (T)value;
         }
+
+        public static string FormattedValue(this Entity entity, string key)
+        {
+           return entity.FormattedValues.Contains(key)
+                ? entity.FormattedValues[key]
+                : entity.Attributes.ContainsKey(key) ? entity[key].ToString() : default;
+        }
     }
 }

@@ -57,6 +57,24 @@ Softline.Unit.Buttons = {
                     Xrm.Utility.alertDialog("No images");
                     return;
                 }
+                if (answer.IsMore) {
+                    let skip = answer.Skip;
+                    while (true) {                        
+                        const whileRequest = updateFormatButton.retriveImageRequest(reference, skip);
+                        const whileResponce = await Xrm.WebApi.online.execute(whileRequest);
+                        const whileJson = await whileResponce.json();
+                        const whileAnswer = JSON.parse(whileJson.responce);
+                        if (whileAnswer.IsError) {
+                            console.error(whileAnswer.Message);
+                            break;
+                        }
+                        images.push(whileAnswer.Images);
+                        skip = whileAnswer.Skip;
+                        if (!whileAnswer.IsMore)
+                            break;
+                    }
+                }
+
                 const formatsName = images.map(i => i.BaseFolder);
                 const allFormats = await updateFormatButton.getUploadFormat(reference.entityType, formatsName);
                 const exclusivebit = fctx.getAttribute('sl_exclusivebit');
@@ -142,13 +160,13 @@ Softline.Unit.Buttons = {
             }, {});
         },
 
-        retriveImageRequest: (reference) => {
+        retriveImageRequest: (reference, skip = 0) => {
             return {
                 regardingobject: {
                     "@odata.type": `Microsoft.Dynamics.CRM.${reference.entityType}`,
                     [`${reference.entityType}id`]: `${reference.id}`,
                 },
-
+                skip: skip,
                 getMetadata: function () {
                     return {
                         boundParameter: null,
@@ -157,15 +175,16 @@ Softline.Unit.Buttons = {
                                 typeName: `${reference.entityType}`,
                                 structuralProperty: 5,
                             },
+                            skip: {
+                                typeName: "Edm.Int32",
+                                structuralProperty: 1
+                            }
                         },
                         operationType: 0,
-                        operationName: "sl_retrive_images",
+                        operationName: "sl_retrive_images"                       
                     };
                 },
             };
-
-
-
         },
 
         uploadImageRequest: (reference, postData) => {
@@ -398,7 +417,7 @@ Softline.Unit.Buttons = {
                 Xrm.Navigation.openAlertDialog("Save the card.", { height: 120, width: 120 });
                 return;
             }
-            const logicalname = fctx.data.entity.getEntityName(); 
+            const logicalname = fctx.data.entity.getEntityName();
             const name = fctx.getAttribute("sl_name")?.getValue();
             const pageInput = {
                 pageType: "webresource",
@@ -408,14 +427,14 @@ Softline.Unit.Buttons = {
             const navigationOptions = {
                 target: 2,
                 height: 550,
-                width: 850,             
+                width: 850,
                 position: 1,
                 title: "Calendar",
             };
             const successCallback = () => fctx.data.refresh()
             Xrm.Navigation.navigateTo(pageInput, navigationOptions).then(successCallback);
         },
-        enable:  (fctx) => {           
+        enable: (fctx) => {
             return true;
         },
     }

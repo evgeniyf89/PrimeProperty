@@ -15,8 +15,8 @@ namespace SoftLine.ActionPlugins.PrintForms.ProjectPriceForm.Model
         public string Label { get; }
 
         [JsonProperty("value")]
-        public string Value { get;}
-    }    
+        public string Value { get; }
+    }
 
     public class MainTable
     {
@@ -51,7 +51,7 @@ namespace SoftLine.ActionPlugins.PrintForms.ProjectPriceForm.Model
         public List<MainTableColumn> MainTableColumns { get; set; }
     }
 
-    public class ProjectPrintForm
+    public class ProjectPrintForm 
     {
         [JsonProperty("objectName")]
         public string ObjectName { get; set; }
@@ -104,5 +104,5 @@ namespace SoftLine.ActionPlugins.PrintForms.ProjectPriceForm.Model
         [JsonProperty("mainTable")]
         public List<MainTable> MainTable { get; set; }
     }
-    
+
 }
