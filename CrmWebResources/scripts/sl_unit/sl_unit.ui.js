@@ -52,7 +52,7 @@ Softline.Unit.Buttons = {
                     Xrm.Utility.alertDialog(answer.Message);
                     return;
                 }
-                const images = answer.Images;
+                const images = [...answer.Images];
                 if (!images || images.length === 0) {
                     Xrm.Utility.alertDialog("No images");
                     return;
@@ -68,7 +68,7 @@ Softline.Unit.Buttons = {
                             console.error(whileAnswer.Message);
                             break;
                         }
-                        images.push(whileAnswer.Images);
+                        whileAnswer.Images.forEach(x => images.push(x));
                         skip = whileAnswer.Skip;
                         if (!whileAnswer.IsMore)
                             break;
@@ -182,10 +182,45 @@ Softline.Unit.Buttons = {
                         },
                         operationType: 0,
                         operationName: "sl_retrive_images"                       
-                    };
+                    };                                                                         
                 },
             };
         },
+
+        return {
+            regardingobject: {
+                "@odata.type": `Microsoft.Dynamics.CRM.${reference.entityType}`,
+                [`${reference.entityType}id`]: `${reference.id}`,
+            },
+            format: {
+                "@odata.type": `Microsoft.Dynamics.CRM.${formatImage.entityType}`,
+                [`${formatImage.entityType}id`]: `${formatImage.sl_upload_formatid}`,
+                "sl_name": formatImage.sl_name,
+                "sl_type": formatImage.sl_type
+            },
+            skip: skip,
+            getMetadata: function () {
+                return {
+                    boundParameter: null,
+                    parameterTypes: {
+                        regardingobject: {
+                            typeName: `${reference.entityType}`,
+                            structuralProperty: 5,
+                        },
+                        format: {
+                            typeName: `${formatImage.entityType}`,
+                            structuralProperty: 5,
+                        },
+                        skip: {
+                            typeName: "Edm.Int32",
+                            structuralProperty: 1
+                        }
+                    },
+                    operationType: 0,
+                    operationName: "sl_retrive_images",
+                };
+            },
+        };
 
         uploadImageRequest: (reference, postData) => {
             return {

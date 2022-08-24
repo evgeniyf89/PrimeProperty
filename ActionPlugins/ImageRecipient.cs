@@ -33,7 +33,7 @@ namespace SoftLine.ActionPlugins
                 var formatPicture = pictures
                     .Where(x => x.GetAttributeValue<EntityReference>("sl_upload_formatid") != null)
                     .ToArray();
-                if (formatPicture.Length > 0 && !formatPicture.Any(x => (DateTime)x["createdon"] < minus5Days))
+                if (formatPicture.Length > 0 && !formatPicture.Any(x => (DateTime)x["createdon"] < minus5Days) || pictures.Count == 0)
                 {
                     context.OutputParameters["responce"] = JsonConvert.SerializeObject(new { IsError = false, Images = new List<Images>() });
                     return;
@@ -44,7 +44,7 @@ namespace SoftLine.ActionPlugins
                     .Sum(x => x.GetAttributeValue<decimal>("sl_size") / 1024);
               
                 var countStep = 5;
-                var isBigSize = sizePicture > 100;
+                var isBigSize = sizePicture > 90;
               
                 var take = isBigSize ? countStep : pictures.Count;
                 var isDeleteFolder = skip == default;

@@ -102,7 +102,7 @@ namespace SoftLine.ActionPlugins.Tests
         public void RetrivePictures()
         {
             var tt = new ImageRecipient();
-            var obj = new EntityReference("sl_unit", new Guid("{242b2170-8974-ec11-8941-002248818089}"));
+            var obj = new EntityReference("sl_unit", new Guid("0daed5b1-8974-ec11-8941-002248818089"));
             var formatRef = new Entity("sl_upload_format", new Guid("{E40E2827-36E6-EB11-BACB-000D3A470D6F}"));
             formatRef["sl_type"] = new OptionSetValue(102690000);
             formatRef["sl_name"] = "634x468_60";

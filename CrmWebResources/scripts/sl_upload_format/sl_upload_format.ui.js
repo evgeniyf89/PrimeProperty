@@ -64,7 +64,7 @@ Softline.UploadFormat.Buttons = {
             while (true) {
                 const query =
                     `<fetch distinct='true' no-lock='true' page='${page} ' >
-                          <entity name='${format.sl_entity}' >                          
+                          <entity name='${format.sl_entity}' >                         
                           <attribute name='${format.sl_entity}id' />                   
                             <link-entity name='sl_picture' from='${from}' to='${format.sl_entity}id' link-type='inner' alias='aa' /> 
                           </entity>
@@ -91,11 +91,10 @@ Softline.UploadFormat.Buttons = {
                 console.error(answer.Message);
                 return answer;
             }
-            const images = answer.Images;
+            const images = [...answer.Images];
             if (!images || images.length === 0) {
                 return answer
-            }
-            
+            }          
             if (answer.IsMore) {
                 let skip = answer.Skip;
                 while (answer.IsMore) {
@@ -107,7 +106,7 @@ Softline.UploadFormat.Buttons = {
                         console.error(answer.Message);
                         return whileAnswer;
                     }
-                    images.push(whileAnswer.Images);
+                    whileAnswer.Images.forEach(x => images.push(x));
                     skip = whileAnswer.Skip;
                     if (!whileAnswer.IsMore)
                         break;
