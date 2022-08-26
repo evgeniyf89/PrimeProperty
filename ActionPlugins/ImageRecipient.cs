@@ -33,11 +33,11 @@ namespace SoftLine.ActionPlugins
                 var formatPicture = pictures
                     .Where(x => x.GetAttributeValue<EntityReference>("sl_upload_formatid") != null)
                     .ToArray();
-                if (formatPicture.Length > 0 && !formatPicture.Any(x => (DateTime)x["createdon"] < minus5Days) || pictures.Count == 0)
-                {
-                    context.OutputParameters["responce"] = JsonConvert.SerializeObject(new { IsError = false, Images = new List<Images>() });
-                    return;
-                }
+                //if (formatPicture.Length > 0 && !formatPicture.Any(x => (DateTime)x["createdon"] < minus5Days) || pictures.Count == 0)
+                //{
+                //    context.OutputParameters["responce"] = JsonConvert.SerializeObject(new { IsError = false, Images = new List<Images>() });
+                //    return;
+                //}
 
                 var sizePicture = pictures
                     .Where(x => x.GetAttributeValue<EntityReference>("sl_upload_formatid") is null)
@@ -133,6 +133,7 @@ namespace SoftLine.ActionPlugins
                              <attribute name='sl_typecode' />
                              <attribute name='sl_upload_formatid' />
                              <attribute name='sl_size' />
+                             <attribute name='sl_weight' />
                              <attribute name='createdon' />
                              <filter>
                                <condition attribute='sl_typecode' operator='in' >
@@ -208,7 +209,8 @@ namespace SoftLine.ActionPlugins
                             {
                                 Base64 = $"data:{MimeType.Jpeg};base64," + Convert.ToBase64String(imageArray),
                                 MimeType = MimeType.Jpeg,
-                                FullName = file.Name
+                                FullName = file.Name,
+                                Weight = gr.First(x=> getPictureName(x) == file.Name)?.GetAttributeValue<decimal?>("sl_weight")
                             };
                             images64.Add(image64);
                         }

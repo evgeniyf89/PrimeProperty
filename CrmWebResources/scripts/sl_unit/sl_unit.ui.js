@@ -59,7 +59,7 @@ Softline.Unit.Buttons = {
                 }
                 if (answer.IsMore) {
                     let skip = answer.Skip;
-                    while (true) {                        
+                    while (true) {
                         const whileRequest = updateFormatButton.retriveImageRequest(reference, skip);
                         const whileResponce = await Xrm.WebApi.online.execute(whileRequest);
                         const whileJson = await whileResponce.json();
@@ -120,6 +120,7 @@ Softline.Unit.Buttons = {
                                         Formatid: id,
                                         Height: height,
                                         Width: width,
+                                        Weight: baseImage.Weight
                                     };
                                 });
                             resImagesPromise.push(promise);
@@ -181,46 +182,11 @@ Softline.Unit.Buttons = {
                             }
                         },
                         operationType: 0,
-                        operationName: "sl_retrive_images"                       
-                    };                                                                         
+                        operationName: "sl_retrive_images"
+                    };
                 },
             };
         },
-
-        return {
-            regardingobject: {
-                "@odata.type": `Microsoft.Dynamics.CRM.${reference.entityType}`,
-                [`${reference.entityType}id`]: `${reference.id}`,
-            },
-            format: {
-                "@odata.type": `Microsoft.Dynamics.CRM.${formatImage.entityType}`,
-                [`${formatImage.entityType}id`]: `${formatImage.sl_upload_formatid}`,
-                "sl_name": formatImage.sl_name,
-                "sl_type": formatImage.sl_type
-            },
-            skip: skip,
-            getMetadata: function () {
-                return {
-                    boundParameter: null,
-                    parameterTypes: {
-                        regardingobject: {
-                            typeName: `${reference.entityType}`,
-                            structuralProperty: 5,
-                        },
-                        format: {
-                            typeName: `${formatImage.entityType}`,
-                            structuralProperty: 5,
-                        },
-                        skip: {
-                            typeName: "Edm.Int32",
-                            structuralProperty: 1
-                        }
-                    },
-                    operationType: 0,
-                    operationName: "sl_retrive_images",
-                };
-            },
-        };
 
         uploadImageRequest: (reference, postData) => {
             return {

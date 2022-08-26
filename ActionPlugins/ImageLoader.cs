@@ -159,7 +159,8 @@ namespace SoftLine.ActionPlugins
                 ["sl_upload_formatid"] = image.Formatid.HasValue ? new EntityReference("sl_upload_format", image.Formatid.Value) : null,
                 ["sl_image"] = image.MimeType == MimeType.Jpeg ? imageByte : null,
                 ["sl_url"] = url,
-                ["sl_size"] = size
+                ["sl_size"] = size,
+                ["sl_weight"] = image.Weight
             };
             var fieldName = GetReqardingField(regardingobjectRef.LogicalName);
             if (!string.IsNullOrEmpty(fieldName))

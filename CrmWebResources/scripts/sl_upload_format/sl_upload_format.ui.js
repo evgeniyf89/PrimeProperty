@@ -148,6 +148,7 @@ Softline.UploadFormat.Buttons = {
                             Formatid: id,
                             Height: height,
                             Width: width,
+                            Weight = baseImage.Weight
                         };
                     });
                 resImagesPromise.push(promise);

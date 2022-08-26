@@ -103,6 +103,7 @@ Softline.Subject.Buttons = {
                                         Formatid: id,
                                         Height: height,
                                         Width: width,
+                                        Weight: baseImage.Weight
                                     };
                                 });
                             resImagesPromise.push(promise);
@@ -411,6 +412,6 @@ Softline.Subject.Buttons = {
         },
         enable: fctx => {
             return true;
-        },  
+        },
     }
 }

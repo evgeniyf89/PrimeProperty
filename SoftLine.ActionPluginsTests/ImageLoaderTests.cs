@@ -102,7 +102,7 @@ namespace SoftLine.ActionPlugins.Tests
         public void RetrivePictures()
         {
             var tt = new ImageRecipient();
-            var obj = new EntityReference("sl_unit", new Guid("0daed5b1-8974-ec11-8941-002248818089"));
+            var obj = new EntityReference("sl_unit", new Guid("{99AAD5B1-8974-EC11-8941-002248818089}"));
             var formatRef = new Entity("sl_upload_format", new Guid("{E40E2827-36E6-EB11-BACB-000D3A470D6F}"));
             formatRef["sl_type"] = new OptionSetValue(102690000);
             formatRef["sl_name"] = "634x468_60";
@@ -117,11 +117,11 @@ namespace SoftLine.ActionPlugins.Tests
                 var formatPicture = pictures
                     .Where(x => x.GetAttributeValue<EntityReference>("sl_upload_formatid") != null)
                     .ToArray();
-                if (formatPicture.Length > 0 && !formatPicture.Any(x => (DateTime)x["createdon"] < minus5Days))
-                {
-                    var responce = JsonConvert.SerializeObject(new { IsError = false, Images = new List<Images>() });
-                    return;
-                }
+                //if (formatPicture.Length > 0 && !formatPicture.Any(x => (DateTime)x["createdon"] < minus5Days))
+                //{
+                //    var responce = JsonConvert.SerializeObject(new { IsError = false, Images = new List<Images>() });
+                //    return;
+                //}
                 bool filterUpload(Entity picture) => picture.GetAttributeValue<EntityReference>("sl_upload_formatid") is null;
                 var skipIsDefault = skip == default;
                 var sizePicture = pictures
