@@ -89,21 +89,22 @@ namespace SoftLine.ActionPlugins.Tests
         [TestMethod()]
         public void PGetMasterPintFormTest()
         {
+      
             var inputData = new InputPrintFormData()
             {
                 IsWithLogo = true,
-                Language = new EntityReference("sl_language", new Guid("{a4523a24-20db-eb11-bacb-000d3a2c3636}")),
-                Market = new OptionSetValue(486160000),
-                PromotionType = new OptionSetValue(102690000),
+                Language = new EntityReference("sl_language", new Guid("a0523a24-20db-eb11-bacb-000d3a2c3636")),
+                Market = new OptionSetValue(486160002),
+                PromotionType = new OptionSetValue(588610000),
                 TargetEntityIds = new[] {
-                    "b10d68db-b773-ec11-8941-002248818536", "af0d68db-b773-ec11-8941-002248818536",
-                    "7f0d68db-b773-ec11-8941-002248818536", "530d68db-b773-ec11-8941-002248818536",
-                    "e808fa32-cb0f-ec11-b6e6-0022488425d2" }.Select(x => new Guid(x)).ToArray()
+                    "db0468db-b773-ec11-8941-002248818536", "f80468db-b773-ec11-8941-002248818536",
+                    "770568db-b773-ec11-8941-002248818536"}.Select(x => new Guid(x)).ToArray(),
+                PrintFormId = (int)PrintFormId.Price
             };
             var spData = Helper.GetInputDataForSp(_service);
             var spService = new SharePointClient(spData.Url, spData.Credentials);
-            var printForm = new MasterFormConstructor(_service,spService);
-            var tt =printForm.GetForms(inputData);
+            var printForm = new ProjectPrintFormConstructor(_service,spService);
+            var tt = printForm.GetForms(inputData);
             var json = JsonConvert.SerializeObject(tt);
         }
     }

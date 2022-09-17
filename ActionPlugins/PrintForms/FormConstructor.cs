@@ -270,7 +270,7 @@ namespace SoftLine.ActionPlugins.PrintForms
         public virtual Dictionary<Guid, string> RetriveListings(InputPrintFormData inputData, IEnumerable<Entity> flats, Func<FormMetadata, string> getData, out decimal minPrice)
         {
             minPrice = 0;
-            if (flats.Count() == 0) return default;
+            if (flats.Count() == 0) return new Dictionary<Guid, string>();
             var query = $@"<fetch no-lock='true'>
                            <entity name='sl_listing'>
                              <attribute name='sl_long_rent' />

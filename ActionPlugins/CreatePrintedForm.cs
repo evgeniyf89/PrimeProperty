@@ -6,6 +6,8 @@ using SoftLine.ActionPlugins.PrintForms;
 using SoftLine.ActionPlugins.PrintForms.ProjectPriceForm.Model;
 using System.Collections.Generic;
 using SoftLine.ActionPlugins.ProjectPriceForm.PrintForms;
+using SoftLine.ActionPlugins.PrintForms.Metadata;
+using SoftLine.ActionPlugins.PrintForms.MasterPrice;
 
 namespace SoftLine.ActionPlugins
 {
@@ -26,10 +28,11 @@ namespace SoftLine.ActionPlugins
                     PromotionType = input["promotionType"] as OptionSetValue,
                     Language = input["language"] as EntityReference,
                     Market = input["market"] as OptionSetValue,
+                    PrintFormId = (int)input["printFormId"]
                 };
 
                 var printForm = СreatePrintForm(inputData, service);
-               
+
                 context.OutputParameters["responce"] = JsonConvert.SerializeObject(printForm);
             }
             catch (Exception ex)
@@ -42,14 +45,23 @@ namespace SoftLine.ActionPlugins
             }
         }
 
-        public List<ProjectPrintForm> СreatePrintForm(InputPrintFormData inputData, IOrganizationService service)
+        public object СreatePrintForm(InputPrintFormData inputData, IOrganizationService service)
         {
-            var spData = Helper.GetInputDataForSp(service);           
+            var spData = Helper.GetInputDataForSp(service);
             using (var spClient = new SharePointClient(spData.Url, spData.Credentials))
             {
-                var constructor = new ProjectPrintFormConstructor(service, spClient);
-                return constructor.GetForms(inputData);
-            }           
+                switch (inputData.PrintFormId)
+                {
+                    case (int)PrintFormId.Price:
+                        var constructor = new ProjectPrintFormConstructor(service, spClient);
+                        return constructor.GetForms(inputData);
+                    case (int)PrintFormId.MasterPrice:
+                        var masterContstrucor = new MasterFormConstructor(service, spClient);
+                        return masterContstrucor.GetForms(inputData);
+                    default:
+                        return default;
+                }
+            }
         }
     }
 }

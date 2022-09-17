@@ -393,9 +393,9 @@ Softline.Subject.Buttons = {
         },
     },
     PrintForm: {
-        command: async (fctx, ids) => {
+        command: async (fctx, ids, printFormId) => {
             debugger;
-            const projects = JSON.stringify(ids);
+            const projects = JSON.stringify({ ids, printFormId });
             const pageInput = {
                 pageType: "webresource",
                 webresourceName: "sl_projectPriceInputParameters.html",

@@ -13,5 +13,6 @@ namespace SoftLine.ActionPlugins.PrintForms
         public OptionSetValue PromotionType { get; set; }
 
         public System.Guid[] TargetEntityIds { get; set; }
+        public int PrintFormId { get; set; }
     }
 }

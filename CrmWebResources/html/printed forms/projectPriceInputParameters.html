@@ -87,7 +87,7 @@
             const queryStringParts = queryString.split("&");
             for (let i = 0; i < queryStringParts.length; i++) {
                 const pieces = queryStringParts[i].split("=");
-                params[pieces[0].toLowerCase()] = pieces.length === 1 ? null : pieces[1];
+                params[pieces[0].toLowerCase()] = pieces.length === 1 ? null : JSON.parse(pieces[1]);
             }
             return params;
         })();
@@ -106,9 +106,17 @@
             sessionStorage.setItem("inputData", json.responce);
             fctx.Utility.closeProgressIndicator();
             fctx.Navigation.navigateBack();
+            let webresourceName = '';
+            switch (_inputParameter.data.printFormId) {
+                case 1:
+                    webresourceName = "sl_/reports/Project.html";
+                    break;
+                case 2:
+                    webresourceName = "sl_/reports/Master.html";
+            }
             const pageInput = {
                 pageType: "webresource",
-                webresourceName: "sl_/reports/Project.html",
+                webresourceName: webresourceName,
             };
             const navigationOptions = {
                 target: 2,
@@ -124,7 +132,8 @@
             const elements = e.target.elements;
             const languageIndex = elements.language.selectedIndex;
             return {
-                data: _inputParameter.data,
+                data: JSON.stringify(_inputParameter.data.ids),
+                printFormId: _inputParameter.data.printFormId,
                 language: {
                     "@odata.type": `Microsoft.Dynamics.CRM.sl_language`,
                     [`sl_languageid`]: elements.language[languageIndex].id,
@@ -148,6 +157,10 @@
                                 typeName: "Edm.Int32",
                                 structuralProperty: 1
                             },
+                            printFormId: {
+                                typeName: "Edm.Int32",
+                                structuralProperty: 1
+                            },
                             promotionType: {
                                 typeName: "Edm.Int32",
                                 structuralProperty: 1
@@ -163,7 +176,6 @@
                 },
             };
         }
-
 
         loadInputData = async () => {
             const languagesQuery = `?$select=sl_name,sl_code&$filter=statecode eq 0`;
@@ -209,74 +221,7 @@
             return `${fctx.Page.context.getClientUrl()}/api/data/v9.1/GlobalOptionSetDefinitions(Name='${optionSetName}')`;
         };
 
-        /*
-                 const json = `{
-            "objectName": "sky",
-              "preview": "https://static.tildacdn.com/tild3830-3562-4865-b562-643637396531/view01_final.jpg",
-              "detailsLabel": "Details",
-              "details": {"City": "Limassol", "Area": "Potamos Germasogeias", "Completion": "Under construction", "Distance to sea": "300 m", "Prices from": "800,000 €", "Completion date": "Jan 2021"},
-              "majorBenefitsLabel": "Major benefits",
-              "majorBenefits": "<ul style='padding-left: 0;'><li>landmark architecture from the leading London bureau;</li> <li>the only high-rise condominium of Limassol with no noise from the coastal road;</li><li>breathtaking unobstructed sea views;</li><li>hotel-style facilities: concierge, SPA, outdoor pool, heated indoor pool, gym, tennis court, green area, and underground parking;</li></ul>",
-              "websiteUrl": "bbf.com",
-              "phoneLabel": "T",
-              "phone": "+357 25 315 300",
-              "faxLabel": "F",
-              "fax": "+357 25 315 301",
-              "emailLabel": "E",
-              "email": "info@bbf.com",
-              "address": "28 Ambelakion Street, Germasogeia 4046 Limassol, Cyprus P.O. Box 70649, 3801 Limassol",
-              "tagline": "Build. Better. Future.",
-              "metadata": {
-                  "withLogo": false,
-                  "mainTableColumns": [
-                      {"name":"№","unit":false},
-                      {"name":"IBP","unit":false},
-                      {"name":"Floor","unit":false},
-                      {"name":"Type","unit":false},
-                      {"name":"Bedrooms","unit":false},
-                      {"name":"Indoor area","unit":"sq. m."},
-                      {"name":"Cov. veranda","unit":"sq. m."},
-                      {"name":"Uncov. veranda","unit":"sq. m."},
-                      {"name":"Roof terrace","unit":"sq. m."},
-                      {"name":"Common area","unit":"sq. m."},
-                      {"name":"Total area","unit":"sq. m."},
-                      {"name":"Pool","unit":false},
-                      {"name":"PRICE","unit":"€"},
-                      {"name":"VAT","unit":false}
-                  ]
-              },
-            "mainTable": [{
-                  "blockName": "Block A",
-                  "flats": [
-                              [
-                                  [ "№ 101","","1","Appartment","2","75.6","18.7","0.0","0.0","10.5","104.7","Common","Sold","Yes"],
-                                  [ "№ 101","","1","Appartment","2","75.6","18.7","0.0","0.0","10.5","104.7","Common","Sold","Yes"],
-                                  [ "№ 101","","1","Appartment","2","75.6","18.7","0.0","0.0","10.5","104.7","Common","Sold","Yes"]
-                              ],
-                              [
-                                  [ "№ 101","","1","Appartment","2","75.6","18.7","0.0","0.0","10.5","104.7","Common","Sold","Yes"],
-                                  [ "№ 101","","1","Appartment","2","75.6","18.7","0.0","0.0","10.5","104.7","Common","Sold","Yes"],
-                                  [ "№ 101","","1","Appartment","2","75.6","18.7","0.0","0.0","10.5","104.7","Common","Sold","Yes"]
-                              ]
-                          ]
-              },
-              {
-                  "blockName": "Block B",
-                  "flats": [
-                              [
-                                  [ "№ 101","","1","Appartment","2","75.6","18.7","0.0","0.0","10.5","104.7","Common","Sold","Yes"],
-                                  [ "№ 101","","1","Appartment","2","75.6","18.7","0.0","0.0","10.5","104.7","Common","Sold","Yes"],
-                                  [ "№ 101","","1","Appartment","2","75.6","18.7","0.0","0.0","10.5","104.7","Common","Sold","Yes"]
-                              ],
-                              [
-                                  [ "№ 101","","1","Appartment","2","75.6","18.7","0.0","0.0","10.5","104.7","Common","Sold","Yes"],
-                                  [ "№ 101","","1","Appartment","2","75.6","18.7","0.0","0.0","10.5","104.7","Common","Sold","Yes"],
-                                  [ "№ 101","","1","Appartment","2","75.6","18.7","0.0","0.0","10.5","104.7","Common","Sold","Yes"]
-                              ]
-                          ]
-              }]
-        }`
-                 */
+     
     </script>
 </body>
 </html>

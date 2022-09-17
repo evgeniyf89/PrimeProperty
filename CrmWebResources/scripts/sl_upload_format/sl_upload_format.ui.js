@@ -94,7 +94,7 @@ Softline.UploadFormat.Buttons = {
             const images = [...answer.Images];
             if (!images || images.length === 0) {
                 return answer
-            }          
+            }
             if (answer.IsMore) {
                 let skip = answer.Skip;
                 while (answer.IsMore) {
@@ -148,7 +148,7 @@ Softline.UploadFormat.Buttons = {
                             Formatid: id,
                             Height: height,
                             Width: width,
-                            Weight = baseImage.Weight
+                            Weight: baseImage.Weight
                         };
                     });
                 resImagesPromise.push(promise);

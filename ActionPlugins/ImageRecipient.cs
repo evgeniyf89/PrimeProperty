@@ -33,11 +33,11 @@ namespace SoftLine.ActionPlugins
                 var formatPicture = pictures
                     .Where(x => x.GetAttributeValue<EntityReference>("sl_upload_formatid") != null)
                     .ToArray();
-                //if (formatPicture.Length > 0 && !formatPicture.Any(x => (DateTime)x["createdon"] < minus5Days) || pictures.Count == 0)
-                //{
-                //    context.OutputParameters["responce"] = JsonConvert.SerializeObject(new { IsError = false, Images = new List<Images>() });
-                //    return;
-                //}
+                if (formatPicture.Length > 0 && !formatPicture.Any(x => (DateTime)x["createdon"] < minus5Days) || pictures.Count == 0)
+                {
+                    context.OutputParameters["responce"] = JsonConvert.SerializeObject(new { IsError = false, Images = new List<Images>() });
+                    return;
+                }
 
                 var sizePicture = pictures
                     .Where(x => x.GetAttributeValue<EntityReference>("sl_upload_formatid") is null)

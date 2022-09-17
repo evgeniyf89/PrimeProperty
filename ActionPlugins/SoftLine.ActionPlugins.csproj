@@ -252,6 +252,7 @@
     <Compile Include="PrintForms\MasterPrice\MasterFormConstructor.cs" />
     <Compile Include="PrintForms\MasterPrice\Model\MasterPriceModel.cs" />
     <Compile Include="PrintForms\Metadata\FormMetadata.cs" />
+    <Compile Include="PrintForms\Metadata\PrintFormId.cs" />
     <Compile Include="PrintForms\Project Price Form\ProjectPrintFormConstructor.cs" />
     <Compile Include="PrintForms\Project Price Form\Model\FlatTableColumn.cs" />
     <Compile Include="PrintForms\Project Price Form\Model\ProjectPriceModel.cs" />
