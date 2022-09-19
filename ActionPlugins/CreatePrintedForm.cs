@@ -8,6 +8,7 @@ using System.Collections.Generic;
 using SoftLine.ActionPlugins.ProjectPriceForm.PrintForms;
 using SoftLine.ActionPlugins.PrintForms.Metadata;
 using SoftLine.ActionPlugins.PrintForms.MasterPrice;
+using SoftLine.ActionPlugins.PrintForms.UnitForm.Model;
 
 namespace SoftLine.ActionPlugins
 {
@@ -21,16 +22,7 @@ namespace SoftLine.ActionPlugins
             var input = context.InputParameters;
             try
             {
-                var inputData = new InputPrintFormData()
-                {
-                    IsWithLogo = (bool)input["isWithLogo"],
-                    TargetEntityIds = JsonConvert.DeserializeObject<Guid[]>(input["data"] as string),
-                    PromotionType = input["promotionType"] as OptionSetValue,
-                    Language = input["language"] as EntityReference,
-                    Market = input["market"] as OptionSetValue,
-                    PrintFormId = (int)input["printFormId"]
-                };
-
+                var inputData = JsonConvert.DeserializeObject<InputPrintFormData>(input["inputData"] as string);
                 var printForm = СreatePrintForm(inputData, service);
 
                 context.OutputParameters["responce"] = JsonConvert.SerializeObject(printForm);
@@ -58,6 +50,8 @@ namespace SoftLine.ActionPlugins
                     case (int)PrintFormId.MasterPrice:
                         var masterContstrucor = new MasterFormConstructor(service, spClient);
                         return masterContstrucor.GetForms(inputData);
+                    case (int)PrintFormId.Unit:
+                        return new UnitPrintFrom();
                     default:
                         return default;
                 }

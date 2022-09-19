@@ -25,13 +25,10 @@ namespace SoftLine.ActionPlugins.PrintForms.MasterPrice
 
         public override MasterPriceModel GetForms(InputPrintFormData inputData)
         {
-            var metadata = RetriveMetadata(inputData.Language.Id);
             var projects = base.RetriveLinkProjectData(inputData);
             string getData(FormMetadata priceMetadata)
             {
-                var data = metadata[priceMetadata.StringValue()].FirstOrDefault();
-                return data.GetValue<string>("translation.sl_name")
-                    ?? data.GetAttributeValue<string>("sl_word");
+                return GetMetadataTranslate(priceMetadata, inputData.Language.Id);
             }
             var account = RetriveAccount();
             var isEnglish = Language.English.Equals(inputData.Language);

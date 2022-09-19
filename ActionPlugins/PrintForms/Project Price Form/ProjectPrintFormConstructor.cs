@@ -25,25 +25,22 @@ namespace SoftLine.ActionPlugins.ProjectPriceForm.PrintForms
 
         public override List<ProjectPrintForm> GetForms(InputPrintFormData inputData)
         {
-            var projects = RetriveLinkProjectData(inputData);
-            var metadata = RetriveMetadata(inputData.Language.Id);
+            var projects = RetriveLinkProjectData(inputData);           
             return projects
                 .GroupBy(x => x.Id)
                 .Select(groupProjects =>
                 {
                     var project = groupProjects.First();
-                    return GetForm(inputData, project, metadata);
+                    return GetForm(inputData, project);
                 })
                 .ToList();
         }
 
-        private ProjectPrintForm GetForm(InputPrintFormData inputData, Entity project, Dictionary<string, Entity[]> metadata)
+        private ProjectPrintForm GetForm(InputPrintFormData inputData, Entity project)
         {
             string getData(FormMetadata priceMetadata)
             {
-                var data = metadata[priceMetadata.StringValue()].FirstOrDefault();
-                return data.GetValue<string>("translation.sl_name")
-                    ?? data.GetAttributeValue<string>("sl_word");
+                return GetMetadataTranslate(priceMetadata, inputData.Language.Id);
             }
             var pictureUrl = project.GetValue<string>("picture.sl_url");
             var pictureByte = string.IsNullOrEmpty(pictureUrl)

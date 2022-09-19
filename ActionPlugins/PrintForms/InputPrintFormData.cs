@@ -1,4 +1,5 @@
 ﻿using Microsoft.Xrm.Sdk;
+using SoftLine.ActionPlugins.PrintForms.Metadata;
 
 namespace SoftLine.ActionPlugins.PrintForms
 {
@@ -14,5 +15,11 @@ namespace SoftLine.ActionPlugins.PrintForms
 
         public System.Guid[] TargetEntityIds { get; set; }
         public int PrintFormId { get; set; }
+        public Unit Unit { get; set; }
+
+        public bool? IsWithPrice { get; set; }
+
+        public bool? IsWithId { get; set; }
+        public bool? IsOnePage { get; set; }
     }
 }

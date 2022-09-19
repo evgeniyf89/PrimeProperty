@@ -6,10 +6,9 @@ using System.Threading.Tasks;
 
 namespace SoftLine.ActionPlugins.PrintForms.Metadata
 {
-    public enum PrintFormId
+    public enum Unit
     {
-        Price = 1,
-        MasterPrice = 2,
-        Unit = 3
+        Client = 1,
+        Seller = 2
     }
 }

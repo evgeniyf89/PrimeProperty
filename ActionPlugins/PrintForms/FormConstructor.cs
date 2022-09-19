@@ -22,6 +22,10 @@ namespace SoftLine.ActionPlugins.PrintForms
         internal ISharePointClient SharePointClient;
 
         private Dictionary<string, Entity[]> _metadata;
+        private Dictionary<Guid, Entity> _cityTranslate;
+        private Dictionary<Guid, Entity> _areaTranslate;
+
+        public CultureInfo CultureInfo { get => new CultureInfo("en-US"); } 
         public FormConstructor(IOrganizationService crmService, ISharePointClient sharePointClient)
         {
             CrmService = crmService;
@@ -149,7 +153,7 @@ namespace SoftLine.ActionPlugins.PrintForms
             return CrmService.RetrieveMultiple(new FetchExpression(query)).Entities;
         }
 
-        public Dictionary<string, Entity[]> RetriveMetadata(Guid languageid)
+        private Dictionary<string, Entity[]> RetriveMetadata(Guid languageid)
         {
             var keys = Enum.GetValues(typeof(FormMetadata))
                 .Cast<FormMetadata>()
@@ -177,12 +181,11 @@ namespace SoftLine.ActionPlugins.PrintForms
                              </link-entity>
                            </entity>
                          </fetch>";
-            _metadata = CrmService
+            return CrmService
                 .RetrieveMultiple(new FetchExpression(query))
                 .Entities
                 .GroupBy(x => x.GetAttributeValue<string>("sl_id"))
                 .ToDictionary(x => x.Key, y => y.ToArray());
-            return _metadata;
         }
 
         public virtual List<string> GetPoolData(InputPrintFormData inputData, IEnumerable<Entity> flats)
@@ -258,13 +261,13 @@ namespace SoftLine.ActionPlugins.PrintForms
                          </fetch>";
             var translations = CrmService.RetrieveMultiple(new FetchExpression(query)).Entities;
             return flats
-                .ToDictionary(y=>y.Id,x =>
-                {
-                    var value = x.GetAttributeValue<OptionSetValue>(poolAttrName)?.Value;
-                    if (!value.HasValue) return default;
-                    var translation = translations.FirstOrDefault(t => t.GetAttributeValue<int>("sl_value") == value);
-                    return translation?.GetValue<string>("ab.sl_name") ?? translation.GetAttributeValue<string>("sl_word");
-                });
+                .ToDictionary(y => y.Id, x =>
+                   {
+                       var value = x.GetAttributeValue<OptionSetValue>(poolAttrName)?.Value;
+                       if (!value.HasValue) return default;
+                       var translation = translations.FirstOrDefault(t => t.GetAttributeValue<int>("sl_value") == value);
+                       return translation?.GetValue<string>("ab.sl_name") ?? translation.GetAttributeValue<string>("sl_word");
+                   });
         }
 
         public virtual Dictionary<Guid, string> RetriveListings(InputPrintFormData inputData, IEnumerable<Entity> flats, Func<FormMetadata, string> getData, out decimal minPrice)
@@ -292,7 +295,7 @@ namespace SoftLine.ActionPlugins.PrintForms
             var priceSold = getData(FormMetadata.Sold);
             var priceRented = getData(FormMetadata.Rented);
             decimal? fromPrice = decimal.MaxValue;
-            var cultureInfo = new Lazy<CultureInfo>(() => new CultureInfo("en-US"));
+          
             var prices = flats
                 .ToDictionary(y => y.Id,
                 x =>
@@ -309,7 +312,7 @@ namespace SoftLine.ActionPlugins.PrintForms
                             var startingPrice = listing?.GetAttributeValue<Money>("sl_sale_starting_price").Value;
                             if (fromPrice > startingPrice)
                                 fromPrice = startingPrice;
-                            return startingPrice?.ToString("N", cultureInfo.Value);
+                            return startingPrice?.ToString("N", CultureInfo);
                         }
                     }
                     else if (isLtRent)
@@ -322,7 +325,7 @@ namespace SoftLine.ActionPlugins.PrintForms
                             var startingPrice = listing?.GetAttributeValue<Money>("sl_long_rent").Value;
                             if (fromPrice > startingPrice)
                                 fromPrice = startingPrice;
-                            return startingPrice?.ToString("N", cultureInfo.Value);
+                            return startingPrice?.ToString("N", CultureInfo);
                         }
                     }
                     return default;
@@ -331,5 +334,124 @@ namespace SoftLine.ActionPlugins.PrintForms
             return prices;
         }
 
+
+        public virtual Entity RetriveListing(InputPrintFormData inputData, Guid propertyId)
+        {            
+            var query = $@"<fetch no-lock='true'>
+                           <entity name='sl_listing'>
+                             <attribute name='sl_long_rent' />
+                             <attribute name='sl_short_rent' />
+                             <attribute name='sl_sale_starting_price' />
+                             <filter type='and'>
+                               <condition attribute='sl_marketcode' operator='eq' value='{inputData.Market.Value}' />
+                               <condition attribute='sl_clients_promotion_typecode' operator='eq' value='{inputData.PromotionType.Value}' />
+                               <condition attribute='sl_unitid' operator='in'>
+                                 <value>{propertyId}</value>
+                               </condition>
+                             </filter>
+                           </entity>
+                         </fetch>";
+            return CrmService.RetrieveMultiple(new FetchExpression(query)).Entities.FirstOrDefault();
+        }
+
+
+        public virtual DataCollection<Entity> RetriveWordWithTranslation(Guid languageid)
+        {
+            var query = $@"<fetch no-lock='true'>
+                           <entity name='sl_word_for_report'>
+                             <attribute name='sl_word' />
+                             <attribute name='sl_option_set' />
+                             <attribute name='sl_value' />
+                             <link-entity name='sl_word_translation' from='sl_wordid' to='sl_word_for_reportid' link-type='inner' alias='translation'>
+                               <attribute name='sl_name' />
+                               <filter type='and'>
+                                 <condition attribute='sl_languageid' operator='eq' value='{languageid}' />
+                               </filter>
+                             </link-entity>
+                           </entity>
+                         </fetch>";
+            return CrmService.RetrieveMultiple(new FetchExpression(query)).Entities;
+        }
+
+        public virtual DataCollection<Entity> RetrivePropertyTypeTranslation(Guid languageid)
+        {
+            var query = $@"<fetch no-lock='true'>
+                           <entity name='sl_property_type_translation'>
+                             <attribute name='sl_name' />
+                             <attribute name='sl_property_typeid' />
+                             <filter type='and'>
+                               <condition attribute='sl_languageid' operator='eq' value='{languageid}' />
+                             </filter>
+                           </entity>
+                         </fetch>";
+            return CrmService.RetrieveMultiple(new FetchExpression(query)).Entities;
+        }
+
+        private Dictionary<Guid, Entity> RetriveCityTranslate(Guid languageid)
+        {
+            return RetriveTranslete(languageid, "sl_city_translation", "sl_cityid");
+        }
+
+        private Dictionary<Guid, Entity> RetriveAreaTranslate(Guid languageid)
+        {
+            return RetriveTranslete(languageid, "sl_area_translation", "sl_areaid");
+        }
+
+        public string GetCityTranslate(EntityReference cityRef, Guid languageid)
+        {
+            if (cityRef is null)
+                return string.Empty;
+            if (_cityTranslate is null)
+            {
+                _cityTranslate = RetriveCityTranslate(languageid);
+            }
+            return _cityTranslate.TryGetValue(cityRef.Id, out Entity translateCity)
+                ? translateCity.GetAttributeValue<string>("sl_name")
+                : cityRef.Name;
+        }
+
+        public string GetAreaTranslate(EntityReference areaRef, Guid languageid)
+        {
+            if (areaRef is null)
+                return string.Empty;
+            if (_areaTranslate is null)
+            {
+                _areaTranslate = RetriveAreaTranslate(languageid);
+            }
+            return _areaTranslate.TryGetValue(areaRef.Id, out Entity translateArea)
+                ? translateArea.GetAttributeValue<string>("sl_name")
+                : areaRef.Name;
+        }
+
+        private Dictionary<Guid, Entity> RetriveTranslete(Guid languageid, string entityLogicalName, string attr)
+        {
+            var query = $@"<fetch no-lock='true'>
+                          <entity name='{entityLogicalName}'>
+                            <attribute name='sl_name' />
+                            <attribute name='{attr}' />
+                            <filter type='and'>
+                              <condition attribute='sl_languageid' operator='eq' value='{languageid}' />
+                              <condition attribute='{attr}' operator='not-null' />
+                            </filter>                           
+                          </entity>
+                        </fetch>";
+            return CrmService.RetrieveMultiple(new FetchExpression(query))
+                .Entities
+                .GroupBy(x => x.GetAttributeValue<EntityReference>(attr).Id)
+                .ToDictionary(x => x.Key, y => y.FirstOrDefault());
+        }
+
+        public string GetMetadataTranslate(FormMetadata formMetadata, Guid languageid)
+        {
+            if (_metadata is null)
+                _metadata = RetriveMetadata(languageid);
+            if (_metadata.TryGetValue(formMetadata.StringValue(), out Entity[] values))
+            {
+                var data = values.FirstOrDefault();
+                return data.GetValue<string>("translation.sl_name")
+                   ?? data.GetAttributeValue<string>("sl_word");
+            }
+            return string.Empty;
+        }
     }
 }

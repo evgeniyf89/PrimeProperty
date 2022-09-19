@@ -438,6 +438,30 @@ Softline.Unit.Buttons = {
         enable: (fctx) => {
             return true;
         },
+    },
+    Unit: {
+        command: (fctx, printFormId) => {
+            debugger;
+            const id = fctx.data.entity.getId();
+            const projects = JSON.stringify({ ids: [id], printFormId });
+            const pageInput = {
+                pageType: "webresource",
+                webresourceName: "sl_projectPriceInputParameters.html",
+                data: `${projects}`
+            };
+            const height = printFormId == 3 ? 60 : 45;
+            const navigationOptions = {
+                target: 2,
+                height: { value: height, unit: "%" },
+                width: { value: 50, unit: "%" },
+                position: 1,
+                title: 'Project'
+            };
+            Xrm.Navigation.navigateTo(pageInput, navigationOptions)
+        },
+        enable: (fctx) => {
+            return true;
+        },
     }
 };
 

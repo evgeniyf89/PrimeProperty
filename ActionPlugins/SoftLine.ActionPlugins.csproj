@@ -253,9 +253,12 @@
     <Compile Include="PrintForms\MasterPrice\Model\MasterPriceModel.cs" />
     <Compile Include="PrintForms\Metadata\FormMetadata.cs" />
     <Compile Include="PrintForms\Metadata\PrintFormId.cs" />
+    <Compile Include="PrintForms\Metadata\Unit.cs" />
     <Compile Include="PrintForms\Project Price Form\ProjectPrintFormConstructor.cs" />
     <Compile Include="PrintForms\Project Price Form\Model\FlatTableColumn.cs" />
     <Compile Include="PrintForms\Project Price Form\Model\ProjectPriceModel.cs" />
+    <Compile Include="PrintForms\UnitForm\Model\UnitPrintFrom.cs" />
+    <Compile Include="PrintForms\UnitForm\UnitPrintFormConstructor.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
     <Compile Include="RentPriceLogic.cs" />
     <Compile Include="ReserveOrRentProperty.cs" />

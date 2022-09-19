@@ -42,6 +42,21 @@ namespace SoftLine.ActionPlugins.PrintForms.Metadata
         Tagline = 01040,
         FormName = 01059,
         SellerNotification = 01060,
+        Id = 01080,
+        CharacteristicsLabel = 01127,
+        DescriptionLabel = 01057,
+        ProjectName = 01068,
+        PidName = 01081,
+        OwnerName = 01082,
+        UidName = 01083,
+        TypeName = 01084,
+        CommisionName = 01085,
+        OwnerEmail = 01086,
+        NotesName = 01087,
+        GoogleName = 01088,
+        PriceLabelPromotion = 01111,
+        PriceLabelLtRent = 01100,
+        PriceLabelStRent = 01101
     }
     public static class ProjectPriceMetadataExtensions
     {
