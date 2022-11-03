@@ -1,0 +1,312 @@
+﻿<html>
+<head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.1.3/dist/css/bootstrap.min.css" rel="stylesheet" integrity="sha384-1BmE4kWBq78iYhFldvKuhfTAU6auU8tT94WrHftjDbrCEXSU1oBoqyl2QvZ6jIW3" crossorigin="anonymous">
+    <link href="/WebResources/sl_reports/css/pagedefenition.css" rel="stylesheet">
+    <link href="/WebResources/sl_reports/css/report_basic.css" rel="stylesheet">
+    <title id="PageTitle">Project Price</title>
+    <meta>
+</head>
+
+<body style="max-width: 210mm; overflow-wrap: break-word;" onfocusout="parent.setEmailRange();">
+    <div id="printable" style="max-width: 210mm;">
+        <header>
+
+            <div class="container-fluid">
+                <div class="row">
+                    <div class="col"> <img id="logo" src="/webresources/sl_/reports/images/logobbfwhite.png" class="logo"></div>
+                    <div class="col">
+                        <div class="project-name">
+                            <div class="d-inline prefix-container">
+                                <img src="/webresources/sl_/reports/images/logobbfwhite.png" class="prefix">
+                            </div>
+                            <div class="d-inline project-name-text"><span id="objectName"></span></div>
+                        </div>
+                        <div style="float: none;"></div><br>
+                        <span class="report-name">price list</span>
+                    </div>
+                </div>
+            </div>
+        </header>
+        <div class="document-body container-fluid">
+            <div class="row hero-wrapper">
+                <div class="col"> <img class="img-fluid" id="preview" src="https://via.placeholder.com/317" alt="preview"> </div>
+                <div class="col">
+                    <p><span id="detailsLabel"></span>:</p>
+                    <p id="details"></p>
+                </div>
+                <div class="col">
+                    <p><span id="majorBenefitsLabel"></span>:</p>
+                    <p id="majorBenefits"></p>
+                </div>
+            </div>
+            <div class="row">
+                <div class="col report-maintable-container">
+                    <table class="report-maintable">
+                        <thead>
+                            <tr id="headerTitle">
+                            </tr>
+                            <tr id="headerUnit">
+                            </tr>
+                        </thead>
+                        <tbody id="mainTable">
+                        </tbody>
+                    </table>
+
+                </div>
+            </div>
+        </div>
+
+        <footer>
+            <div class="container-fluid">
+                <div class="row report-info">
+                    <div class="col"> <span id="reportDate"></span> </div>
+                    <div class="col text-end"> <span></span> </div>
+                </div>
+                <div class="row footer-colored">
+                    <div id="footerLeft" class="col-8">
+                        <h5 id="websiteUrl"></h5>
+                        <p class="contact-data"><span id="phoneLabel"></span>:&nbsp;<span id="phone"></span>&nbsp;<span id="faxLabel"></span>:&nbsp;<span id="fax"></span>&nbsp;<span id="emailLabel"></span>:&nbsp;<span id="email"></span></p>
+                        <p class="contact-data"><span id="address"></span></p>
+                    </div>
+                    <div id="footerRight" class="col-4 text-end">
+                        <p class="contact-data">&nbsp;</p>
+                        <p class="contact-data">&nbsp;</p>
+                        <h5 id="tagline"></h5>
+                    </div>
+                </div>
+            </div>
+        </footer>
+    </div>
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.1.3/dist/js/bootstrap.bundle.min.js" integrity="sha384-ka7Sk0Gln4gmtz2MlQnikT1wXgYsOg+OMhuP+IlRH9sENBO0LRn5q+8nbTov4+1p" crossorigin="anonymous"></script>
+    <script src="https://unpkg.com/jspdf@latest/dist/jspdf.umd.min.js"></script>
+    <script src="https://html2canvas.hertzen.com/dist/html2canvas.min.js"></script>
+    <script type="text/javascript">
+		window.onload = windowLoad;
+
+		var inputData = `{
+    "objectName": "sky tower",
+	"preview": "https://static.tildacdn.com/tild3830-3562-4865-b562-643637396531/view01_final.jpg",
+	"detailsLabel": "Details",
+	"details": {"City": "Limassol", "Area": "Potamos Germasogeias", "Completion": "Under construction", "Distance to sea": "300 m", "Prices from": "800,000 €", "Completion date": "Jan 2021"},
+	"majorBenefitsLabel": "Major benefits",
+	"majorBenefits": "<ul style='padding-left: 0;'><li>landmark architecture from the leading London bureau;</li> <li>the only high-rise condominium of Limassol with no noise from the coastal road;</li><li>breathtaking unobstructed sea views;</li><li>hotel-style facilities: concierge, SPA, outdoor pool, heated indoor pool, gym, tennis court, green area, and underground parking;</li></ul>",
+	"websiteUrl": "bbf.com",
+	"phoneLabel": "T",
+	"phone": "+357 25 315 300",
+	"faxLabel": "F",
+	"fax": "+357 25 315 301",
+	"emailLabel": "E",
+	"email": "info@bbf.com",
+	"address": "28 Ambelakion Street, Germasogeia 4046 Limassol, Cyprus P.O. Box 70649, 3801 Limassol",
+	"tagline": "Build. Better. Future.",
+	"metadata": {
+		"withLogo": true,
+		"mainTableColumns": [
+			{"name":"№","unit":false},
+			{"name":"IBP","unit":false},
+			{"name":"Floor","unit":false},
+			{"name":"Type","unit":false},
+			{"name":"Bedrooms","unit":false},
+			{"name":"Indoor area","unit":"sq. m."},
+			{"name":"Cov. veranda","unit":"sq. m."},
+			{"name":"Uncov. veranda","unit":"sq. m."},
+			{"name":"Roof terrace","unit":"sq. m."},
+			{"name":"Common area","unit":"sq. m."},
+			{"name":"Total area","unit":"sq. m."},
+			{"name":"Pool","unit":false},
+			{"name":"PRICE","unit":"€"},
+			{"name":"VAT","unit":false}
+		]
+	},
+    "mainTable": [{
+		"blockName": "Block A",
+		"flats": [
+					[
+						[ "№ 101","","1","Appartment","2","75.6","18.7","0.0","0.0","10.5","104.7","Common","Sold","Yes"],
+						[ "№ 101","","1","Appartment","2","75.6","18.7","0.0","0.0","10.5","104.7","Common","Sold","Yes"],
+						[ "№ 101","","1","Appartment","2","75.6","18.7","0.0","0.0","10.5","104.7","Common","Sold","Yes"],
+						[ "№ 101","","1","Appartment","2","75.6","18.7","0.0","0.0","10.5","104.7","Common","Sold","Yes"],
+						[ "№ 101","","1","Appartment","2","75.6","18.7","0.0","0.0","10.5","104.7","Common","Sold","Yes"],
+						[ "№ 101","","1","Appartment","2","75.6","18.7","0.0","0.0","10.5","104.7","Common","Sold","Yes"],
+						[ "№ 101","","1","Appartment","2","75.6","18.7","0.0","0.0","10.5","104.7","Common","Sold","Yes"],
+						[ "№ 101","","1","Appartment","2","75.6","18.7","0.0","0.0","10.5","104.7","Common","Sold","Yes"],
+						[ "№ 101","","1","Appartment","2","75.6","18.7","0.0","0.0","10.5","104.7","Common","Sold","Yes"],
+						[ "№ 101","","1","Appartment","2","75.6","18.7","0.0","0.0","10.5","104.7","Common","Sold","Yes"],
+						[ "№ 101","","1","Appartment","2","75.6","18.7","0.0","0.0","10.5","104.7","Common","Sold","Yes"],
+						[ "№ 101","","1","Appartment","2","75.6","18.7","0.0","0.0","10.5","104.7","Common","Sold","Yes"]
+					],
+					[
+						[ "№ 101","","1","Appartment","2","75.6","18.7","0.0","0.0","10.5","104.7","Common","Sold","Yes"],
+						[ "№ 101","","1","Appartment","2","75.6","18.7","0.0","0.0","10.5","104.7","Common","Sold","Yes"],
+						[ "№ 101","","1","Appartment","2","75.6","18.7","0.0","0.0","10.5","104.7","Common","Sold","Yes"]
+					]
+				]
+	},
+	{
+		"blockName": "Block B",
+		"flats": [
+					[
+						[ "№ 101","","1","Appartment","2","75.6","18.7","0.0","0.0","10.5","104.7","Common","Sold","Yes"],
+						[ "№ 101","","1","Appartment","2","75.6","18.7","0.0","0.0","10.5","104.7","Common","Sold","Yes"],
+						[ "№ 101","","1","Appartment","2","75.6","18.7","0.0","0.0","10.5","104.7","Common","Sold","Yes"]
+					],
+					[
+						[ "№ 101","","1","Appartment","2","75.6","18.7","0.0","0.0","10.5","104.7","Common","Sold","Yes"],
+						[ "№ 101","","1","Appartment","2","75.6","18.7","0.0","0.0","10.5","104.7","Common","Sold","Yes"],
+						[ "№ 101","","1","Appartment","2","75.6","18.7","0.0","0.0","10.5","104.7","Common","Sold","Yes"]
+					]
+				]
+	}]
+}`;
+
+		function windowLoad() {
+			addPageNumbers();
+			addReportDate();
+			buildReport(inputData);
+			convertHTMLToPDF();
+		}
+
+		function addReportDate() {
+			let date = new Date();
+			let options = { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' };
+			document.getElementById("reportDate").innerHTML = date.toLocaleDateString('en-US', options);
+		}
+
+		function addPageNumbers() {
+			let totalPages = Math.ceil((document.body.scrollHeight + (Math.round(document.body.scrollHeight / 1123) - 1) * (document.getElementsByTagName("header")[0].scrollHeight + document.getElementsByTagName("footer")[0].scrollHeight)) / 1123);
+			for (let i = 1; i <= totalPages; i++) {
+				let pageNumberDiv = document.createElement("div");
+				let pageNumber = document.createTextNode("Page " + i + " of " + totalPages);
+				pageNumberDiv.style.position = "absolute";
+				pageNumberDiv.style.top = "calc((" + i + " * (297mm - 0.5px)) - 48.1mm)";
+				pageNumberDiv.style.height = "16px";
+				pageNumberDiv.style.di = "16px";
+				pageNumberDiv.classList.add("pagenumber")
+				pageNumberDiv.appendChild(pageNumber);
+				document.body.insertBefore(pageNumberDiv, document.getElementById("content"));
+				pageNumberDiv.style.right = "8mm";
+			}
+		}
+
+		function buildReport(inputData) {
+			const obj = JSON.parse(inputData);
+			for (let key in obj) {
+				if (obj.hasOwnProperty(key)) {
+					let elem = document.getElementById(key)
+					if (elem && key != "mainTable" && key != "metadata") {
+						if (elem.nodeName == "IMG") {
+							elem.src = obj[key];
+						}
+						else{
+							if (key != "details"){
+								elem.innerHTML = obj[key];
+							}
+							else{
+								for (const detail in obj[key]) {
+									let detailBlock = document.getElementById(key);
+									detailBlock.innerHTML+= `${detail}:&emsp;${obj[key][detail]}<br>`;
+								}
+							}
+						}
+					}
+					else {
+						if (key == "mainTable") {
+							processMainTable(elem, obj);
+						}
+						else if (key == "metadata") {
+							processMetadata(elem, obj);
+						}
+					}
+				}
+			}
+		}
+
+		function processMainTable(elem, obj) {
+			for (const block in obj["mainTable"]) {
+				if (obj["mainTable"][block].blockName) {
+					let blockRow = document.createElement("tr");
+					let blockTd = document.createElement("td");
+					blockTd.colSpan = 999;
+					blockTd.innerHTML = obj["mainTable"][block].blockName;
+					blockRow.appendChild(blockTd);
+					elem.appendChild(blockRow);
+				}
+				let floors = obj["mainTable"][block].flats;
+				for (const floorNum in floors) {
+					let floor = floors[floorNum]
+					for (const flat in floor) {
+						let flatRow = document.createElement("tr");
+						for (let key in floor[flat]) {
+							let flatTd = document.createElement("td");
+							flatTd.innerHTML = floor[flat][key];
+							flatRow.appendChild(flatTd);
+						}
+						if ((flat == floor.length - 1) && floor.length != 1) flatRow.classList.add("row-spacer")
+						elem.appendChild(flatRow);
+					}
+				}
+			}
+		}
+
+		function processMetadata(elem, obj) {
+			if (obj["metadata"]) {
+				const metadata = obj["metadata"];
+				if (!metadata.withLogo){
+					document.getElementById("logo").style.display = "none";
+					document.getElementById("footerLeft").style.display = "none";
+					document.getElementById("footerRight").style.display = "none";
+				}
+				if (metadata.mainTableColumns){
+					for (const column in metadata.mainTableColumns) {
+						let columnElement = document.createElement("td");
+						columnElement.innerHTML = metadata.mainTableColumns[column].name;
+						if (metadata.mainTableColumns[column].unit){
+							let unitElement = document.createElement("td");
+							unitElement.innerHTML = metadata.mainTableColumns[column].unit;
+							document.getElementById("headerUnit").appendChild(unitElement);
+						}
+						else{
+							columnElement.rowSpan = 2;
+						}
+						document.getElementById("headerTitle").appendChild(columnElement);
+					}
+				}
+			}
+		}
+
+		function convertHTMLToPDF() {
+			const { jsPDF } = window.jspdf;
+
+			var doc = new jsPDF({
+								orientation: 'p',
+								unit: 'mm',
+								format: 'a4',
+								putOnlyUsedFonts:true,
+								floatPrecision: 16 // or "smart", default is 16
+								});
+			var pdfjs = document.querySelector('#printable');
+
+			doc.html(pdfjs, {
+				callback: function(doc) {
+					doc.save("output.pdf");
+				},
+				x: 0,
+				y: 0,
+				html2canvas: {
+					scale: 0.2645,
+					width: 768,
+					//height: 1000,
+					scrollY: 500,
+					windowHeight: 500,
+					allowTaint: true
+				}
+	});
+}
+
+    </script>
+
+
+</body>
+</html>

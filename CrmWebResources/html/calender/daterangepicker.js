@@ -55,6 +55,7 @@
         this.autoUpdateInput = true;
         this.alwaysShowCalendars = false;
         this.ranges = {};
+        this.rentedBtnBlock = options.isRentedBtnBlock;
 
         this.opens = 'right';
         if (this.element.hasClass('pull-right'))
@@ -111,8 +112,7 @@
                 '</div>' +
                 '<div class="drp-buttons">' +
                 '<span class="drp-selected"></span>' +
-                '<button class="rentedBtn" type="button"></button>' +
-                '<button class="cancelBtn" type="button"></button>' +
+                '<button class="rentedBtn" type="button"></button>'  +
                 '<button class="applyBtn" disabled="disabled" type="button"></button> ' +
                 '</div>' +
                 '</div>';
@@ -405,12 +405,10 @@
         this.container.find('.applyBtn, .cancelBtn, .rentedBtn').addClass(this.buttonClasses);
         if (this.applyButtonClasses.length)
             this.container.find('.applyBtn').addClass(this.applyButtonClasses);
-        if (this.cancelButtonClasses.length){
-            this.container.find('.rentedBtn').addClass(this.cancelButtonClasses);
-            this.container.find('.cancelBtn').addClass(this.cancelButtonClasses);
+        if (this.cancelButtonClasses.length) {
+            this.container.find('.rentedBtn').addClass(this.cancelButtonClasses);           
         }
-        this.container.find('.applyBtn').html(this.locale.applyLabel);
-        this.container.find('.cancelBtn').html(this.locale.cancelLabel);
+        this.container.find('.applyBtn').html(this.locale.applyLabel);       
         this.container.find('.rentedBtn').html(this.locale.rentedLabel);
 
 
@@ -1021,11 +1019,12 @@
         },
 
         updateFormInputs: function () {
- /*
-  '<button class="rentedBtn" type="button"></button>' +
-                '<button class="cancelBtn" type="button"></button>' +
-                '<button class="applyBtn" disabled="disabled" type="button"></button> ' +
- */
+            /*
+             '<button class="rentedBtn" type="button"></button>' +
+                           '<button class="cancelBtn" type="button"></button>' +
+                           '<button class="applyBtn" disabled="disabled" type="button"></button> ' +
+            */
+            
             if (this.singleDatePicker || (this.endDate && (this.startDate.isBefore(this.endDate) || this.startDate.isSame(this.endDate)))) {
                 this.container.find('button.applyBtn').prop('disabled', false);
                 this.container.find('button.rentedBtn').prop('disabled', false);
@@ -1035,7 +1034,9 @@
                 this.container.find('button.rentedBtn').prop('disabled', true);
                 this.container.find('button.cancelBtn').prop('disabled', true);
             }
-
+            if (this.rentedBtnBlock){
+                this.container.find('button.rentedBtn').prop('disabled', true);
+            }
         },
 
         move: function () {
@@ -1264,7 +1265,6 @@
                     this.leftCalendar.month.add(1, 'month');
             }
             this.element.trigger('clickPrev.daterangepicker', this);
-            this.updateCalendars();
         },
 
         hoverDate: function (e) {

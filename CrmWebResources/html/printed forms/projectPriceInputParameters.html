@@ -1,0 +1,289 @@
+﻿<!DOCTYPE html>
+<html>
+<style>
+    * {
+        box-sizing: border-box;
+    }
+
+    .myForm {
+        display: grid;
+        grid-template-areas:
+            "customer taxi"
+            "customer extras"
+            "pickup dropoff"
+            "instructions instructions"
+            "submit submit";
+        grid-template-columns: auto auto;
+        grid-template-rows: auto auto auto auto;
+        grid-gap: 0.8em 0.5em;
+        background: #eee;
+        padding: 1.2em;
+    }
+
+        .myForm textarea {
+            height: calc(100% - 1.5em);
+        }
+
+        .myForm button {
+            background: gray;
+            color: white;
+            padding: 1em;
+        }
+
+        .myForm input:not([type="radio"]):not([type="checkbox"]),
+        .myForm textarea,
+        .myForm select {
+            width: 100%;
+            border: 0;
+            padding: 1em;
+            margin: 0.5em 0;
+        }
+
+        .myForm label {
+            display: block;
+        }
+
+    fieldset {
+        border: 0;
+    }
+
+    #submit {
+        grid-area: submit;
+    }
+
+    input[type="checkbox"] {
+        transform: scale(2);
+        margin: 0.8em;
+    }
+</style>
+<body onload="loadInputData()">
+    <form class="myForm">
+    </form>
+    <script>
+        const fctx = parent.Xrm;
+        const _inputParameter = (() => {
+            const queryString = decodeURIComponent(location.search.substring(1));
+            const params = {};
+            const queryStringParts = queryString.split("&");
+            for (let i = 0; i < queryStringParts.length; i++) {
+                const pieces = queryStringParts[i].split("=");
+                params[pieces[0].toLowerCase()] = pieces.length === 1 ? null : JSON.parse(pieces[1]);
+            }
+            return params;
+        })();
+        document.getElementsByClassName("myForm")[0].addEventListener("submit", async (e) => {
+            e.preventDefault();
+            const request = printFormRequest(e);
+            fctx.Utility.showProgressIndicator("Loading");
+            const responce = await fctx.WebApi.online.execute(request);
+            const json = await responce.json();
+            const data = JSON.parse(json.responce);
+            if (data.IsError) {
+                fctx.Utility.closeProgressIndicator();
+                fctx.Utility.alertDialog(data.Message);
+                return;
+            }
+            sessionStorage.setItem("inputData", json.responce);
+            fctx.Utility.closeProgressIndicator();
+            fctx.Navigation.navigateBack();
+            let webresourceName = '';
+            switch (+_inputParameter.data.printFormId) {
+                case 1:
+                    webresourceName = "sl_/reports/Project.html";
+                    break;
+                case 2:
+                    webresourceName = "sl_/reports/Master.html";
+                    break;
+                case 3:
+                    webresourceName = "sl_/reports/Object.html";
+                    break;
+            }
+            const pageInput = {
+                pageType: "webresource",
+                webresourceName: webresourceName,
+            };
+            const navigationOptions = {
+                target: 2,
+                height: { value: 80, unit: "%" },
+                width: { value: 50, unit: "%" },
+                position: 1,
+                title: 'Project'
+            };
+            fctx.Navigation.navigateTo(pageInput, navigationOptions);
+        });
+
+        const printFormRequest = (e) => {
+            const elements = e.target.elements;
+            const languageIndex = elements.language.selectedIndex;
+            const inputData = {
+                TargetEntityIds: _inputParameter.data.ids,
+                PrintFormId: _inputParameter.data.printFormId,
+                Language: {
+                    "LogicalName": `sl_language`,
+                    "Id": elements.language[languageIndex].id,
+                },
+                Market: { Value: elements.market.value },
+                PromotionType: { Value: elements.promotion_type.value },
+                IsWithLogo: elements.with_logo.checked,
+                Unit: elements.unit?.value,
+                IsWithPrice: elements.with_price?.checked,
+                IsWithId: elements.with_id?.checked,
+                IsOnePage: elements.one_page?.checked
+            }
+            return {
+                inputData: JSON.stringify(inputData),
+                getMetadata: function () {
+                    return {
+                        boundParameter: null,
+                        parameterTypes: {
+                            inputData: {
+                                typeName: `Edm.String`,
+                                structuralProperty: 1,
+                            }                           
+                        },
+                        operationType: 0,
+                        operationName: "sl_get_print_form",
+                    };
+                },
+            };
+        }
+
+        loadInputData = async () => {
+            switch (+_inputParameter.data.printFormId) {
+                case 3:
+                    createInputParametersForObject();
+                    break;
+                default:
+                    createInputParametersForPrice();
+                    break;
+            }
+            const languagesQuery = `?$select=sl_name,sl_code&$filter=statecode eq 0`;
+            const promotionTypeQuery = getQueryForGlobalOptionSet("sl_promotion_typecode");
+            const marketQuery = getQueryForGlobalOptionSet("sl_market");
+
+            const languagesPromise = fctx.WebApi.retrieveMultipleRecords("sl_language", languagesQuery);
+            const promotionTypePromise = fetch(promotionTypeQuery);
+            const marketPromise = fetch(marketQuery);
+
+            const responce = await Promise.all([languagesPromise, promotionTypePromise, marketPromise]);
+            const languages = responce[0];
+            const languagesElem = document.getElementById("language");
+            languages.entities.forEach((l) => {
+                const option = document.createElement("option");
+                option.text = l.sl_name;
+                option.value = l.sl_code;
+                option.id = l.sl_languageid;
+                if (l.sl_code?.toUpperCase() === "EN") option.selected = true;
+                languagesElem.add(option, 0);
+            });
+
+            const promotion = await responce[1].json();
+            const promotionsElem = document.getElementById("promotion_type");
+            promotion.Options.forEach((p) => {
+                const option = document.createElement("option");
+                option.text = p.Label.LocalizedLabels[0].Label;
+                option.value = p.Value;
+                promotionsElem.add(option, 0);
+            });
+
+            const market = await responce[2].json();
+            const marketElem = document.getElementById("market");
+            market.Options.forEach((m) => {
+                const option = document.createElement("option");
+                option.text = m.Label.LocalizedLabels[0].Label;
+                option.value = m.Value;
+                marketElem.add(option, 0);
+            });
+            const unitElem = document.getElementById("unit");
+            if (unitElem) {
+                const unitData = [
+                    { name: "Client", value: 1 },
+                    { name: "Seller", value: 2 },
+                ]
+                unitData.forEach(x => {
+                    const option = document.createElement("option");
+                    option.text = x.name;
+                    option.value = x.value;
+                    unitElem.add(option, 0);
+                })
+            }
+        };
+
+        cretateBaseInputData = (form) => {
+            const data = [
+                { labelName: "Promotion type", attributeName: "promotion_type" },
+                { labelName: "Language", attributeName: "language" },
+                { labelName: "Market", attributeName: "market" },
+            ]
+            data.forEach(x => createFieldsetWithSelect(x.labelName, x.attributeName, form));
+        }
+
+        createInputParametersForPrice = () => {
+            const form = document.getElementsByClassName("myForm")[0];
+            cretateBaseInputData(form);
+            const data = [
+                { labelName: "With logo ?", attributeName: "with_logo" },
+            ]
+            data.forEach(x => createFieldsetWithCheckbox(x.labelName, x.attributeName, form));
+            createSubmitButton(form);
+        }
+
+        createSubmitButton = (form) => {
+            const button = document.createElement("button");
+            button.setAttribute("id", "submit");
+            button.innerHTML = "SUBMIT";
+            form.appendChild(button);
+        }
+
+        createInputParametersForObject = () => {
+            const form = document.getElementsByClassName("myForm")[0];
+            cretateBaseInputData(form);
+            const dataSelect = [
+                { labelName: "Unit", attributeName: "unit" },
+            ]
+            dataSelect.forEach(x => createFieldsetWithSelect(x.labelName, x.attributeName, form));
+
+            const dataCheckbox = [
+                { labelName: "With logo ?", attributeName: "with_logo" },
+                { labelName: "With price ?", attributeName: "with_price" },
+                { labelName: "With ID ?", attributeName: "with_id" },
+                { labelName: "One page ?", attributeName: "one_page" },
+            ]
+            dataCheckbox.forEach(x => createFieldsetWithCheckbox(x.labelName, x.attributeName, form));
+            createSubmitButton(form);
+        }
+
+        createFieldsetWithSelect = (labelName, attributeName, form) => {
+            const fs = document.createElement("fieldset");
+            const label = document.createElement("label");
+            label.innerHTML = labelName;
+            label.setAttribute("for", attributeName);
+            const select = document.createElement("select");
+            select.setAttribute("name", attributeName);
+            select.setAttribute("id", attributeName);
+            fs.appendChild(label);
+            fs.appendChild(select);
+            form.appendChild(fs);
+        }
+
+        createFieldsetWithCheckbox = (labelName, attributeName, form) => {
+            const fs = document.createElement("fieldset");
+            const label = document.createElement("label");
+            label.innerHTML = labelName;
+            label.setAttribute("for", attributeName);
+            const input = document.createElement("input");
+            input.type = "checkbox";
+            input.setAttribute("name", attributeName);
+            fs.appendChild(label);
+            fs.appendChild(input);
+            form.appendChild(fs);
+        }
+
+        getQueryForGlobalOptionSet = (optionSetName) => {
+            return `${fctx.Page.context.getClientUrl()}/api/data/v9.1/GlobalOptionSetDefinitions(Name='${optionSetName}')`;
+        };
+
+
+    </script>
+</body>
+</html>

@@ -38,7 +38,7 @@ namespace Softline.ShortRent
             throw new InvalidPluginExecutionException("There is already a reservation or rental for the dates you enter.");
         }
 
-        private object RetriveExistingRentAvailable(Guid propertyid, DateTime startDate, DateTime endDate, IOrganizationService service)
+        private Entity RetriveExistingRentAvailable(Guid propertyid, DateTime startDate, DateTime endDate, IOrganizationService service)
         {
             var query = $@"<fetch top='1' no-lock='true' >
                           <entity name='sl_unit' >
@@ -48,6 +48,7 @@ namespace Softline.ShortRent
                             <link-entity name='sl_short_rent_available' from='sl_property' to='sl_unitid' link-type='inner' alias='ab' >
                               <attribute name='sl_short_rent_availableid' />                           
                               <filter type='and' >
+                                <condition attribute='sl_st_rent_statuscode' operator='eq' value='588610003' />
                                 <condition attribute='sl_date_to' operator='on-or-after' value='{startDate:yyyy-MM-dd}' />
                                 <condition attribute='sl_date_from' operator='on-or-before' value='{endDate:yyyy-MM-dd}' />
                               </filter>

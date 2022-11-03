@@ -11,6 +11,12 @@ namespace SoftLine.ActionPlugins.Dto
         [JsonProperty("price")]
         public decimal Price { get; set; }
 
+        [JsonProperty("employee")]
+        public string Employee { get; set; }
+
+        [JsonProperty("existing_reservation")]
+        public string ExistingReservation { get; set; }
+
         public RentPrice(DateTime date, decimal price)
         {
             Date = date;

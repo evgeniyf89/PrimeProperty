@@ -63,7 +63,7 @@ Softline.Subject.Buttons = {
                 const withWatermark = exclusivebit && !exclusivebit.getValue() ? true : false;
                 const WATERMARK = "/WebResources/sl_watermark_big.png"
                 const postData = [];
-                
+
                 const groupFormats = updateFormatButton.groupBy(allFormats, "sl_type@OData.Community.Display.V1.FormattedValue");
                 for (let key in groupFormats) {
                     const formatsByName = groupFormats[key];
@@ -103,6 +103,7 @@ Softline.Subject.Buttons = {
                                         Formatid: id,
                                         Height: height,
                                         Width: width,
+                                        Weight: baseImage.Weight
                                     };
                                 });
                             resImagesPromise.push(promise);
@@ -389,6 +390,28 @@ Softline.Subject.Buttons = {
             lngAttr && lngAttr.setValue(marker.position.lng());
             fctx.data.entity.save();
             Xrm.Utility.alertDialog("Coordinates saved");
+        },
+    },
+    PrintForm: {
+        command: async (fctx, ids, printFormId) => {
+            debugger;
+            const projects = JSON.stringify({ ids, printFormId });
+            const pageInput = {
+                pageType: "webresource",
+                webresourceName: "sl_projectPriceInputParameters.html",
+                data: `${projects}`
+            };
+            const navigationOptions = {
+                target: 2,
+                height: { value: 45, unit: "%" },
+                width: { value: 50, unit: "%" },
+                position: 1,
+                title: 'Project'
+            };
+            Xrm.Navigation.navigateTo(pageInput, navigationOptions)
+        },
+        enable: fctx => {
+            return true;
         },
     }
 }

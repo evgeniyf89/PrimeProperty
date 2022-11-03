@@ -18,6 +18,8 @@ namespace SoftLine.ActionPlugins.Dto
         public int Height { get; set; }
         public int Width { get; set; }
 
+        public decimal? Weight { get; set; }
+
         public Guid? Formatid { get; set; }
 
         public DateTime? LastModifiedDate { get; set; }

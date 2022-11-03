@@ -22,27 +22,83 @@ namespace SoftLine.ActionPlugins
             try
             {
                 var input = context.InputParameters;
+                var skip = (int)input["skip"];
                 var regardingobjectRef = input["regardingobject"] as EntityReference;
                 var format = input.Contains("format") ? input["format"] as Entity : default;
                 var serviceFactory = (IOrganizationServiceFactory)serviceProvider.GetService(typeof(IOrganizationServiceFactory));
                 var service = serviceFactory.CreateOrganizationService(null);
                 var pictures = RetrivePictures(regardingobjectRef, format, service);
-                var groupUrls = pictures
-                     .Where(x => x.GetAttributeValue<EntityReference>("sl_upload_formatid") is null)
-                     .GroupBy(x => x.FormattedValues["sl_typecode"]);
-                var images = GetFileAndDeleteFolderInSp(groupUrls, format, service);
-                foreach (var pic in pictures.Where(x => x.GetAttributeValue<EntityReference>("sl_upload_formatid") != null))
+                var dateNow = DateTime.Now;
+                var minus5Days = dateNow.AddDays(-5);
+                var formatPicture = pictures
+                    .Where(x => x.GetAttributeValue<EntityReference>("sl_upload_formatid") != null)
+                    .ToArray();
+                if (formatPicture.Length > 0 && !formatPicture.Any(x => (DateTime)x["createdon"] < minus5Days) || pictures.Count == 0)
                 {
-                    service.Delete(pic.LogicalName, pic.Id);
+                    context.OutputParameters["responce"] = JsonConvert.SerializeObject(new { IsError = false, Images = new List<Images>() });
+                    return;
                 }
-                context.OutputParameters["responce"] = JsonConvert.SerializeObject(new { IsError = false, Images = images });
+
+                var sizePicture = pictures
+                    .Where(x => x.GetAttributeValue<EntityReference>("sl_upload_formatid") is null)
+                    .Sum(x => x.GetAttributeValue<decimal>("sl_size") / 1024);
+              
+                var countStep = 5;
+                var isBigSize = sizePicture > 90;
+              
+                var take = isBigSize ? countStep : pictures.Count;
+                var isDeleteFolder = skip == default;
+                var groupUrls = pictures
+                    .Where(x => x.GetAttributeValue<EntityReference>("sl_upload_formatid") is null)
+                    .OrderBy(x => x.Id)
+                    .Skip(skip)
+                    .Take(take)
+                    .GroupBy(x => x.FormattedValues["sl_typecode"]);
+
+
+                var images = GetFileAndDeleteFolderInSp(groupUrls, format, isDeleteFolder, service);
+                if (isDeleteFolder)
+                {
+                    foreach (var pic in formatPicture)
+                    {
+                        service.Delete(pic.LogicalName, pic.Id);
+                    }
+                }
+                context.OutputParameters["responce"] = JsonConvert.SerializeObject(new
+                {
+                    IsError = false,
+                    Images = images,
+                    Skip = skip + countStep,
+                    IsMore = skip + take < pictures.Count
+                });
+            }
+            catch (WebException wex)
+            {
+                var response = wex.Response as HttpWebResponse;
+                if (response != null && (response.StatusCode == (HttpStatusCode)429 || response.StatusCode == (HttpStatusCode)503))
+                {
+                    context.OutputParameters["responce"] = JsonConvert.SerializeObject(new
+                    {
+                        IsError = true,
+                        Message = $"{wex.Message}\nwex\n{wex.InnerException?.Message}\n{wex.StackTrace}",
+                        RetryAfter = response.Headers["Retry-After"]
+                    });
+                }
+                else
+                {
+                    context.OutputParameters["responce"] = JsonConvert.SerializeObject(new
+                    {
+                        IsError = true,
+                        Message = $"{wex.Message}\nwex\n{wex.InnerException?.Message}\n{wex.StackTrace}"
+                    });
+                }
             }
             catch (Exception ex)
             {
                 context.OutputParameters["responce"] = JsonConvert.SerializeObject(new
                 {
                     IsError = true,
-                    Message = $"{ex.Message}\n{ex.InnerException?.Message}\n{ex.StackTrace}"
+                    Message = $"{ex.Message}\n{ex.GetType().Name}\n{ex.InnerException?.Message}\n{ex.StackTrace}"
                 });
             }
         }
@@ -76,6 +132,9 @@ namespace SoftLine.ActionPlugins
                              <attribute name='sl_url' />
                              <attribute name='sl_typecode' />
                              <attribute name='sl_upload_formatid' />
+                             <attribute name='sl_size' />
+                             <attribute name='sl_weight' />
+                             <attribute name='createdon' />
                              <filter>
                                <condition attribute='sl_typecode' operator='in' >
                                 {string.Join("", typecodesFilter.Select(x => $"<value>{x}</value>"))}
@@ -97,7 +156,7 @@ namespace SoftLine.ActionPlugins
                : regardingLogicalName == "sl_project" ? "sl_projectid" : default;
         }
 
-        public List<Images> GetFileAndDeleteFolderInSp(IEnumerable<IGrouping<string, Entity>> groupUrls, Entity format, IOrganizationService service)
+        public List<Images> GetFileAndDeleteFolderInSp(IEnumerable<IGrouping<string, Entity>> groupUrls, Entity format, bool isDeleteFolder, IOrganizationService service)
         {
             var firstUrl = groupUrls.FirstOrDefault();
             if (firstUrl is null) return null;
@@ -105,9 +164,14 @@ namespace SoftLine.ActionPlugins
             var uri = new Uri(firstUrl.First()["sl_url"] as string);
             var basePath = uri.GetLeftPart(UriPartial.Authority);
             var images = new List<Images>();
+            string getPictureName(Entity entity)
+            {
+                var uriPicture = new Uri(entity["sl_url"] as string);
+                return Path.GetFileName(uriPicture.AbsolutePath);
+            }
             using (var ctx = new ClientContext(basePath))
             {
-                ctx.Credentials = Helper.GetСredentialsForSp(service);
+                ctx.Credentials = Helper.GetInputDataForSp(service).Credentials;
                 var web = ctx.Web;
                 var folderForDelete = new List<string>();
                 foreach (var gr in groupUrls)
@@ -118,21 +182,21 @@ namespace SoftLine.ActionPlugins
                     };
                     var images64 = new List<ImageBase64>();
                     var isAddFolder = false;
-                    foreach (var entity in gr)
-                    {
-                        var url = entity["sl_url"] as string;
-                        var file = web.GetFileByUrl(url);
-                        ctx.Load(file,
-                            i => i.Exists,
-                            u => u.Name,
-                            u => u.ListItemAllFields["FileDirRef"]);
 
-                        ctx.ExecuteQuery();
-                        if (!file.Exists) continue;
+                    var folderRelativePath = uri.AbsolutePath.Replace(getPictureName(gr.First()), string.Empty);
+
+                    var folder = ctx.Web.GetFolderByServerRelativeUrl(folderRelativePath);
+                    ctx.ExecuteQuery();
+
+                    var files = folder.Files;
+                    ctx.Load(files, f => f.Include(file => file.Name));
+                    ctx.ExecuteQuery();
+                    var crmPictureNames = gr.Select(getPictureName).ToArray();
+                    foreach (var file in files.Where(f => crmPictureNames.Contains(f.Name)))
+                    {
                         if (!isAddFolder)
                         {
-                            var fileDirRef = file.ListItemAllFields["FileDirRef"] as string;
-                            folderForDelete.Add(fileDirRef);
+                            folderForDelete.Add(folderRelativePath);
                             isAddFolder = true;
                         }
                         var stream = file.OpenBinaryStream();
@@ -145,7 +209,8 @@ namespace SoftLine.ActionPlugins
                             {
                                 Base64 = $"data:{MimeType.Jpeg};base64," + Convert.ToBase64String(imageArray),
                                 MimeType = MimeType.Jpeg,
-                                FullName = file.Name
+                                FullName = file.Name,
+                                Weight = gr.First(x=> getPictureName(x) == file.Name)?.GetAttributeValue<decimal?>("sl_weight")
                             };
                             images64.Add(image64);
                         }
@@ -153,7 +218,8 @@ namespace SoftLine.ActionPlugins
                     image.Base = images64;
                     images.Add(image);
                 }
-                DeleteFolderInSp(ctx, format, folderForDelete);
+                if (isDeleteFolder)
+                    DeleteFolderInSp(ctx, format, folderForDelete);
             }
             return images;
         }
@@ -175,11 +241,13 @@ namespace SoftLine.ActionPlugins
                             x => x.Where(y => y.Name == folderName));
                 }
                 ctx.ExecuteQuery();
-                foreach (var f in folders.ToArray())
+                var allFolders = folders.ToArray();
+                foreach (var f in allFolders)
                 {
                     f.DeleteObject();
                 }
-                ctx.ExecuteQuery();
+                if (allFolders.Length > 0)
+                    ctx.ExecuteQuery();
             }
         }
     }

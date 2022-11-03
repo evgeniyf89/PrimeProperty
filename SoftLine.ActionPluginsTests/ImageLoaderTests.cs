@@ -5,6 +5,7 @@ using Microsoft.Xrm.Sdk.Client;
 using Microsoft.Xrm.Sdk.Messages;
 using Microsoft.Xrm.Sdk.Metadata;
 using Microsoft.Xrm.Sdk.Query;
+using Microsoft.Xrm.Tooling.Connector;
 using Newtonsoft.Json;
 using SofLine.Picture;
 using SoftLine.ActionPlugins;
@@ -16,6 +17,7 @@ using System.Collections.Generic;
 using System.Drawing;
 using System.Drawing.Drawing2D;
 using System.Drawing.Imaging;
+using System.Globalization;
 using System.IO;
 using System.Linq;
 using System.Net;
@@ -33,14 +35,8 @@ namespace SoftLine.ActionPlugins.Tests
         private readonly IOrganizationService _service;
         public ImageLoaderTests()
         {
-            var crmSoap = "https://ppcrm1.api.crm4.dynamics.com/XRMServices/2011/Organization.svc";
-            var uri = new Uri(crmSoap);
-            var credentials = new ClientCredentials();
-            credentials.UserName.Password = "Nhgb432!";
-            credentials.UserName.UserName = "test.crm@prime-property.com";
-            ServicePointManager.SecurityProtocol = System.Net.SecurityProtocolType.Tls12;
-            _service = new OrganizationServiceProxy(uri, null, credentials, null);
-
+            var str = @"AuthType=Office365;Url=https://ppcrm1.crm4.dynamics.com;Username=subbotin.a@prime-property.com;Password=Port-0712";
+            _service = new CrmServiceClient(str);
         }
         [TestMethod()]
         public void ExecuteTest()
@@ -105,23 +101,61 @@ namespace SoftLine.ActionPlugins.Tests
         [TestMethod()]
         public void RetrivePictures()
         {
-
             var tt = new ImageRecipient();
-            var obj = new EntityReference("sl_project", new Guid("{30824c04-2cdb-eb11-bacb-000d3a2c32dc}"));
-            var formatRef = new Entity("sl_upload_format", new Guid("{5A616E8C-36E6-EB11-BACB-000D3A470D6F}"));
+            var obj = new EntityReference("sl_unit", new Guid("{99AAD5B1-8974-EC11-8941-002248818089}"));
+            var formatRef = new Entity("sl_upload_format", new Guid("{E40E2827-36E6-EB11-BACB-000D3A470D6F}"));
             formatRef["sl_type"] = new OptionSetValue(102690000);
-            var pictures = tt.RetrivePictures(obj, formatRef, _service);
+            formatRef["sl_name"] = "634x468_60";
+            var skip = 0;
+            var yy = new List<Images>();
+            while (true)
+            {
 
-            var groupUrls = pictures
-                    .Where(x => x.GetAttributeValue<EntityReference>("sl_upload_formatid") is null)
+                var pictures = tt.RetrivePictures(obj, formatRef, _service);
+                var dateNow = DateTime.Now;
+                var minus5Days = dateNow.AddDays(-5);
+                var formatPicture = pictures
+                    .Where(x => x.GetAttributeValue<EntityReference>("sl_upload_formatid") != null)
+                    .ToArray();
+                //if (formatPicture.Length > 0 && !formatPicture.Any(x => (DateTime)x["createdon"] < minus5Days))
+                //{
+                //    var responce = JsonConvert.SerializeObject(new { IsError = false, Images = new List<Images>() });
+                //    return;
+                //}
+                bool filterUpload(Entity picture) => picture.GetAttributeValue<EntityReference>("sl_upload_formatid") is null;
+                var skipIsDefault = skip == default;
+                var sizePicture = pictures
+                       .Where(filterUpload)
+                       .Sum(x => x.GetAttributeValue<decimal>("sl_size") / 1024);
+
+                var countStep = 5;
+                var isBigSize = sizePicture > 100;
+                
+                var take = isBigSize ? countStep : pictures.Count;
+
+                var groupUrls = pictures
+                    .Where(filterUpload)
+                    .OrderBy(x => x.Id)
+                    .Skip(skip)
+                    .Take(take)
                     .GroupBy(x => x.FormattedValues["sl_typecode"])
                     .ToArray();
-            var images = tt.GetFileAndDeleteFolderInSp(groupUrls, formatRef, _service);
-            foreach (var pic in pictures.Where(x => x.GetAttributeValue<EntityReference>("sl_upload_formatid") != null))
-            {
-                _service.Delete(pic.LogicalName, pic.Id);
+
+
+                var images = tt.GetFileAndDeleteFolderInSp(groupUrls, formatRef, skipIsDefault, _service);
+                yy.AddRange(images);
+                if (skipIsDefault)
+                {
+                    //foreach (var pic in formatPicture)
+                    //{
+                    //    _service.Delete(pic.LogicalName, pic.Id);
+                    //}
+                }
+                var json = JsonConvert.SerializeObject(images);
+                if (skip + take >= pictures.Count)
+                    break;
+                skip +=  countStep;
             }
-            var json = JsonConvert.SerializeObject(images);
         }
 
         public static Stream Base64ToImage(string base64String)
@@ -234,7 +268,7 @@ namespace SoftLine.ActionPlugins.Tests
             var list = new List<ImageBase64>();
 
             loader.UploadDocument(uriFolder, images, refer, _service);
-           
+
         }
 
 
@@ -242,11 +276,12 @@ namespace SoftLine.ActionPlugins.Tests
         public void Calendar()
         {
             var calendar = new CalendarLogic();
-            var prop = new EntityReference("sl_property_for_opportunity", new Guid("3e132c12-5f2b-ec11-b6e5-000d3a268060"));
-            var start = new DateTime(2021, 12, 5);
-            var end = new DateTime(2021, 12, 15);
+            var prop = new EntityReference("sl_unit", new Guid("cfe22b82-c51a-ec11-b6e6-6045bd89207e"));
+            var opp = new EntityReference("opportunity", Guid.Parse("{11939991-932A-EC11-B6E5-000D3A268060}"));
+            var start = new DateTime(2022, 02, 01);
+            var end = new DateTime(2022, 03, 30);
             var rents = calendar.RetriveRent(prop, start, end, _service);
-            var obj = calendar.Map(rents);
+            var obj = calendar.Map(rents, start, end, opp);
             var t = JsonConvert.SerializeObject(obj);
         }
 
@@ -265,32 +300,37 @@ namespace SoftLine.ActionPlugins.Tests
         [TestMethod()]
         public void ReserveOrRentProperty()
         {
-            var data = new EntityReference("sl_property_for_opportunity", new Guid("{5430D489-7752-EC11-8C62-000D3ABFC59F}"));
-            var calendar = new CalendarLogic();
-            var startDate = new DateTime(2022, 1, 23);
-            var endDate = new DateTime(2022, 1, 31);
-            var status = ShortRentSTRentSstatus.Reserved;
+            var data = new EntityReference("sl_property_for_opportunity", new Guid("{9d6af515-b044-ec11-8c62-6045bd8d28f3}"));
 
-            var rents = calendar.RetriveRent(data, startDate, endDate, _service);
-            var obj = calendar.Map(rents);
-            if (obj.RentedByOpportunity.Any() || obj.ReservedByOpportunity.Any())
+            var startDate = new DateTime(2022, 02, 1);
+            var endDate = new DateTime(2022, 02, 12);
+            var status = ShortRentSTRentStatus.Reserved;
+
+            var reserveOrRentProperty = new ReserveOrRentProperty();
+
+            var propertyOpportunity = reserveOrRentProperty.RetrivePropertyOpportunity(data, _service);
+            var listing = propertyOpportunity.GetAttributeValue<EntityReference>("sl_listingid");
+            var opportunityRef = propertyOpportunity.GetAttributeValue<EntityReference>("sl_opportunityid");
+            var propertyRef = propertyOpportunity.GetAttributeValue<EntityReference>("sl_propertyid");
+
+            var calendar = new CalendarLogic();
+            var rents = calendar.RetriveRent(propertyRef, startDate, endDate, _service);
+            var obj = calendar.Map(rents, startDate, endDate, opportunityRef);
+            if (obj?.RentedByOpportunity.Any() ?? false)
             {
-                 JsonConvert.SerializeObject(new { IsError = true, Message = $"The number of rental days is too small." });
+                throw new Exception(JsonConvert.SerializeObject(new { IsError = true, Message = $"Dates are not available for selection." }));
                 return;
             };
             var rangeDays = (endDate - startDate).Days;
             if (rangeDays < obj.MinDays)
             {
-                JsonConvert.SerializeObject(new { IsError = true, Message = $"Dates are not available for selection." });
+                throw new Exception(JsonConvert.SerializeObject(new { IsError = true, Message = $"The number of rental days is too small." }));
                 return;
             };
-            var yy = new ReserveOrRentProperty();
-            var propertyOpportunity = yy.RetrivePropertyOpportunity(data, _service);
-            var listing = propertyOpportunity.GetAttributeValue<EntityReference>("sl_listingid");
-            var opportunityRef = propertyOpportunity.GetAttributeValue<EntityReference>("sl_opportunityid");
+
             if (listing is null)
             {
-                JsonConvert.SerializeObject(new { IsError = true, Message = $"listing is empty" });
+                throw new Exception(JsonConvert.SerializeObject(new { IsError = true, Message = $"listing is empty" }));
                 return;
             }
             var priceLogic = new RentPriceLogic();
@@ -299,22 +339,26 @@ namespace SoftLine.ActionPlugins.Tests
             var rentPrices = priceLogic.RetriveRentPrice(listing, from, to, _service);
             var rentPricesObj = priceLogic.Map(from, to, rentPrices);
             var rentalFree = rentPricesObj.Sum(x => x.Price);
-
-            var rented = obj.Rented.FirstOrDefault();
-            var reserved = obj.Reserved.FirstOrDefault();
-
-            if (rented != default || reserved != default)
+            var shortRentAvailable = reserveOrRentProperty.RetriveShortRentAvailable(propertyOpportunity, _service);
+            var rentStatuscode = shortRentAvailable?.GetAttributeValue<OptionSetValue>("sl_st_rent_statuscode")?.Value;
+            if (shortRentAvailable != null && rentStatuscode != (int)ShortRentSTRentStatus.Reserved)
             {
-                var rentavailableid = rented?.Id ?? reserved.Id;
-                yy.UpdateRentavailable(status, startDate, endDate, rentavailableid, _service);
-                yy.UpdateOpportynity(status, startDate, endDate, opportunityRef, _service);
-                yy.UpdatePropertyOpportunity(status, startDate, endDate, rentalFree, data, _service);
+                throw new Exception(JsonConvert.SerializeObject(new { IsError = true, Message = $"There is already a rental for the dates you enter." }));
                 return;
+            }
+            string message;
+            if (shortRentAvailable is null)
+            {
+                reserveOrRentProperty.CreateRentavailable(status, startDate, endDate, propertyOpportunity, _service);
+                message = "created";
             }
             else
             {
-                yy.CreateRentavailable(status, startDate, endDate, propertyOpportunity, _service);
+                reserveOrRentProperty.UpdateRentavailable(status, startDate, endDate, shortRentAvailable.Id, _service);
+                message = "updated";
             }
+            reserveOrRentProperty.UpdateOpportynity(status, startDate, endDate, opportunityRef, _service);
+            reserveOrRentProperty.UpdatePropertyOpportunity(status, startDate, endDate, rentalFree, data, _service);
         }
 
     }

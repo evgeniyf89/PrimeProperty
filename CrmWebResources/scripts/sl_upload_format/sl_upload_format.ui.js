@@ -20,16 +20,27 @@ Softline.UploadFormat.Buttons = {
                         const format = updateImages.getUploadFormat(fctx);
                         const objectsWithPicture = await updateImages.retriveAllObjects(format);
                         let updateCount = 0;
-                        const count = objectsWithPicture.entities.length;
+                        const count = objectsWithPicture.length;
+
                         for (let i = 0; i < count; i++) {
-                            const object = objectsWithPicture.entities[i];
+                            const object = objectsWithPicture[i];
                             object.id = object[`${format.sl_entity}id`];
                             object.entityType = format.sl_entity;
-                            const isUpdate = await updateImages.updateFormat(object, format);
-                            if (isUpdate) {
-                                updateCount = i + 1;
-                                Xrm.Utility.showProgressIndicator(`${updateCount} update from ${count}`);
+                            let resFormat;
+                            try {
+                                resFormat = await updateImages.updateFormat(object, format);
+                            } catch (ex) {
+                                console.error(ex, object);
+                                continue;
                             }
+                            if (!resFormat.IsError) {
+                                ++updateCount;
+                            } else {
+                                const delay = resFormat.RetryAfter;
+                                delay && await updateImages.sleep(delay * 1000);
+                                await updateImages.updateFormat(object, format);
+                            }
+                            Xrm.Utility.showProgressIndicator(`${updateCount} update from ${count}`);
                         }
                         const messageForProject = `Update: ${updateCount}, errors: ${count - updateCount}`;
                         Xrm.Utility.alertDialog(messageForProject);
@@ -41,23 +52,33 @@ Softline.UploadFormat.Buttons = {
                     }
                 });
         },
-
+        sleep: (ms) => {
+            return new Promise(resolve => setTimeout(resolve, ms));
+        },
         retriveAllObjects: async (format) => {
             const from = format.sl_entity == "sl_unit"
                 ? "sl_propertyid"
                 : `${format.sl_entity}id`;
-            const query =
-                `<fetch distinct='true' no-lock='true' >
-                  <entity name='${format.sl_entity}' >
-                  <attribute name='${format.sl_entity}id' />                   
-                  <link-entity name='sl_picture' from='${from}' to='${format.sl_entity}id' link-type='inner' alias='aa' />                    
-                  </entity>
-            </fetch>`;
-
-            return await Xrm.WebApi.retrieveMultipleRecords(
-                `${format.sl_entity}`,
-                `?fetchXml=${query}`
-            );
+            let page = 1;
+            let allObjects = [];
+            while (true) {
+                const query =
+                    `<fetch distinct='true' no-lock='true' page='${page} ' >
+                          <entity name='${format.sl_entity}' >                         
+                          <attribute name='${format.sl_entity}id' />                   
+                            <link-entity name='sl_picture' from='${from}' to='${format.sl_entity}id' link-type='inner' alias='aa' /> 
+                          </entity>
+                    </fetch>`;
+                const response = await Xrm.WebApi.retrieveMultipleRecords(
+                    `${format.sl_entity}`,
+                    `?fetchXml=${query}`
+                );
+                allObjects.push(...response.entities);
+                page = page + 1;
+                cookie = response.fetchXmlPagingCookie;
+                if (response.entities.length < 5000) break;
+            }
+            return allObjects;
         },
 
         updateFormat: async (entity, format) => {
@@ -66,14 +87,30 @@ Softline.UploadFormat.Buttons = {
             const responce = await Xrm.WebApi.online.execute(request);
             const json = await responce.json();
             const answer = JSON.parse(json.responce);
-            let isUpdate = true;
             if (answer.IsError) {
                 console.error(answer.Message);
-                return false;
+                return answer;
             }
-            const images = answer.Images;
+            const images = [...answer.Images];
             if (!images || images.length === 0) {
-                return isUpdate
+                return answer
+            }
+            if (answer.IsMore) {
+                let skip = answer.Skip;
+                while (answer.IsMore) {
+                    const whileRequest = updateImages.retriveImageRequest(entity, format, skip);
+                    const whileResponce = await Xrm.WebApi.online.execute(whileRequest);
+                    const whileJson = await whileResponce.json();
+                    const whileAnswer = JSON.parse(whileJson.responce);
+                    if (whileAnswer.IsError) {
+                        console.error(answer.Message);
+                        return whileAnswer;
+                    }
+                    whileAnswer.Images.forEach(x => images.push(x));
+                    skip = whileAnswer.Skip;
+                    if (!whileAnswer.IsMore)
+                        break;
+                }
             }
             const withWatermark = entity.sl_exclusivebit && !entity.sl_exclusivebit ? true : false;
             const WATERMARK = "/WebResources/sl_watermark_big.png";
@@ -111,6 +148,7 @@ Softline.UploadFormat.Buttons = {
                             Formatid: id,
                             Height: height,
                             Width: width,
+                            Weight: baseImage.Weight
                         };
                     });
                 resImagesPromise.push(promise);
@@ -122,11 +160,13 @@ Softline.UploadFormat.Buttons = {
             const uploadResponce = await Xrm.WebApi.online.execute(uploadRequest);
             const uploadJson = await uploadResponce.json();
             const res = JSON.parse(uploadJson.responce);
-            if (res.IsError) isUpdate = false;
-            return isUpdate;
+            if (res.IsError) {
+                console.error(res.Message);
+            }
+            return res;
         },
 
-        retriveImageRequest: (reference, formatImage) => {
+        retriveImageRequest: (reference, formatImage, skip = 0) => {
             return {
                 regardingobject: {
                     "@odata.type": `Microsoft.Dynamics.CRM.${reference.entityType}`,
@@ -138,6 +178,7 @@ Softline.UploadFormat.Buttons = {
                     "sl_name": formatImage.sl_name,
                     "sl_type": formatImage.sl_type
                 },
+                skip: skip,
                 getMetadata: function () {
                     return {
                         boundParameter: null,
@@ -150,6 +191,10 @@ Softline.UploadFormat.Buttons = {
                                 typeName: `${formatImage.entityType}`,
                                 structuralProperty: 5,
                             },
+                            skip: {
+                                typeName: "Edm.Int32",
+                                structuralProperty: 1
+                            }
                         },
                         operationType: 0,
                         operationName: "sl_retrive_images",

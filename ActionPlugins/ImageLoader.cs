@@ -50,7 +50,7 @@ namespace SoftLine.ActionPlugins
         public void UploadDocument(Uri folderUri, Images images, EntityReference regardingobjectRef, IOrganizationService service)
         {
             var basePath = folderUri.GetLeftPart(UriPartial.Authority);
-            var credentials = Helper.GetСredentialsForSp(service);
+            var spData = Helper.GetInputDataForSp(service);
 
             byte[] getByteBase64(string base64)
             {
@@ -60,7 +60,7 @@ namespace SoftLine.ActionPlugins
             }
             using (var ctx = new ClientContext(basePath))
             {
-                ctx.Credentials = credentials;
+                ctx.Credentials = spData.Credentials;
                 var web = ctx.Web;
                 var folder = web.GetFolderByServerRelativeUrl($"{folderUri.AbsolutePath}");
                 ctx.Load(folder);
@@ -159,7 +159,8 @@ namespace SoftLine.ActionPlugins
                 ["sl_upload_formatid"] = image.Formatid.HasValue ? new EntityReference("sl_upload_format", image.Formatid.Value) : null,
                 ["sl_image"] = image.MimeType == MimeType.Jpeg ? imageByte : null,
                 ["sl_url"] = url,
-                ["sl_size"] = size
+                ["sl_size"] = size,
+                ["sl_weight"] = image.Weight
             };
             var fieldName = GetReqardingField(regardingobjectRef.LogicalName);
             if (!string.IsNullOrEmpty(fieldName))

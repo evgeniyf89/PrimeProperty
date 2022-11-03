@@ -23,18 +23,48 @@
   th {
     font-weight: bold;
   }
+  .row {
+    background: #f6f6f6;
+    overflow: hidden;
+    padding: 10px;
+  }
+  .col {
+    float: left;
+    width: 33%;
+  }
 </style>
 <div>
-  <div>
-    <input type="text" name="daterange" />
+  <div class="row">
+    <div class="col">
+      <label for="market" style="display: block">Market</label>
+      <select name="select" id="market"></select>
+    </div>
+    <div class="col">
+      <label for="property" style="display: block">Property</label>
+      <input type="text" id="property" />
+    </div>
+    <div class="col">
+      <label for="listing" style="display: block">Minimum days short rent</label>
+      <input type="text" id="minDays" />
+    </div>
   </div>
-  <br /><br />
-  <p id="showData"></p>
+  <div class="row">
+    <div class="col">
+      <label for="opportunity" style="display: block">Opportunity</label>
+      <input type="text" id="opportunity" />
+    </div>
+    <div class="col">
+      <label for="listing" style="display: block">Listing</label>
+      <input type="text" id="listing" />
+    </div>
+  </div>
+  <input type="text" name="daterange" />
 </div>
 
 <script>
   var _xrm = parent.Xrm;
   var _shortrent = {};
+  var _inputData;
   var _inputParameter = (function () {
     var queryString = decodeURIComponent(location.search.substring(1));
     var params = {};
@@ -46,9 +76,64 @@
     return params;
   })();
 
+  async function getData() {
+    if (_inputParameter.logicalname == "sl_property_for_opportunity") {
+      var query = `<fetch top='1' no-lock='true' >
+      <entity name='sl_property_for_opportunity' >
+        <attribute name='sl_opportunityid' />
+        <attribute name='sl_listingid' />
+        <attribute name='sl_propertyid' />
+        <attribute name='sl_date_from' />
+        <attribute name='sl_date_to' />
+        <filter type='and' >
+          <condition attribute='sl_property_for_opportunityid' operator='eq' value='${_inputParameter.data}' />
+        </filter>
+        <link-entity name='opportunity' from='opportunityid' to='sl_opportunityid' link-type='inner' alias='aa' >
+          <attribute name='sl_marketcode' />
+        </link-entity>
+      </entity>
+    </fetch>`;
+      var response = await _xrm.WebApi.retrieveMultipleRecords(
+        "sl_property_for_opportunity",
+        "?fetchXml=" + query
+      );
+      var data = response.entities[0];
+      return {
+        listingid: data._sl_listingid_value,
+        opportunityid: data._sl_opportunityid_value,
+        propertyid: data._sl_propertyid_value,
+        start: data.sl_date_from,
+        end: data.sl_date_to,
+        propertyLogicalName: data["_sl_propertyid_value@Microsoft.Dynamics.CRM.lookuplogicalname"],
+        opportunityName: data["_sl_opportunityid_value@OData.Community.Display.V1.FormattedValue"],
+        listingName: data["_sl_listingid_value@OData.Community.Display.V1.FormattedValue"],
+        market: data["aa.sl_marketcode"],
+        propertyName: data["_sl_propertyid_value@OData.Community.Display.V1.FormattedValue"],
+        isMarketBlock: true,
+      };
+    }
+    if (_inputParameter.logicalname == "sl_unit") {
+      var nowDate = moment();
+      return {
+        listingid: "",
+        opportunityid: "",
+        propertyid: _inputParameter.data,
+        start: nowDate.format("YYYY-MM-DD"),
+        end: nowDate.add(1, "days").format("YYYY-MM-DD"),
+        propertyLogicalName: _inputParameter.logicalname,
+        opportunityName: "",
+        listingName: "",
+        market: "",
+        propertyName: _inputParameter.name,
+        isMarketBlock: false,
+      };
+    }
+  }
+
   async function getShortRent(start, end) {
-    var logicalName = _inputParameter.logicalname;
-    var id = _inputParameter.data;
+    var logicalName = _inputData.propertyLogicalName;
+    var id = _inputData.propertyid;
+    var opportunityid = _inputData.opportunityid;
     var request = {
       data: {
         "@odata.type": `Microsoft.Dynamics.CRM.${logicalName}`,
@@ -62,6 +147,10 @@
           parameterTypes: {
             data: {
               typeName: `${logicalName}`,
+              structuralProperty: 5,
+            },
+            opportunityRef: {
+              typeName: `opportunity`,
               structuralProperty: 5,
             },
             startDate: {
@@ -78,6 +167,12 @@
         };
       },
     };
+    if (opportunityid) {
+      request.opportunityRef = {
+        "@odata.type": `Microsoft.Dynamics.CRM.opportunity`,
+        ["opportunityid"]: `${opportunityid}`,
+      };
+    }
     var responce = await _xrm.WebApi.online.execute(request);
     var json = await responce.json();
     var shortrent = JSON.parse(json.responce);
@@ -88,9 +183,10 @@
   }
 
   (async function () {
-    var startDateStr = _inputParameter.start;
-    var endDateStr = _inputParameter.end;
-    var listingid = _inputParameter.listingid;
+    _inputData = await getData();
+    var startDateStr = _inputData.start;
+    var endDateStr = _inputData.end;
+    var listingid = _inputData.listingid;
     if (startDateStr && endDateStr) {
       var startDate = moment(startDateStr).startOf("day");
       var endDate = moment(endDateStr).startOf("day");
@@ -101,25 +197,25 @@
       _shortrent = await getShortRent(_firstDay, _lastDay);
     }
     if (!_shortrent) return;
-    var currntDateUtc = moment().startOf("day");
-    var startDate = _shortrent.fromDate
-      ? moment(_shortrent.fromDate).startOf("day")
-      : currntDateUtc;
+    var currentDateUtc = moment().startOf("day");
+    var startDate = startDateStr ? moment(startDateStr).startOf("day") : currentDateUtc;
+    var endDate = endDateStr ? moment(endDateStr).startOf("day") : currentDateUtc;
     _lastDay = !_lastDay
       ? moment(startDate, "DD-MM-YYYY").add(2, "month").startOf("day")
       : _lastDay;
     _firstDay = !_firstDay ? startDate : _firstDay;
     var daterange = $('input[name="daterange"]');
+    setData();
     daterange.daterangepicker(
       {
         startDate: startDate,
-        endDate: _shortrent.toDate ? moment(_shortrent.toDate).startOf("day") : currntDateUtc,
+        endDate: endDate,
         opens: "left",
-        minDate: currntDateUtc,
+        minDate: currentDateUtc,
+        isRentedBtnBlock: _inputData.opportunityid == '' || _inputData.opportunityid == void 0,
         locale: {
           format: "DD.MM.YYYY",
-          applyLabel: "Check dates",
-          cancelLabel: "Rent",
+          applyLabel: "Check dates",         
           rentedLabel: "Reserve",
         },
         autoUpdateInput: true,
@@ -155,15 +251,27 @@
       },
       checkDatesClick
     );
-    async function checkDatesClick(start, end, label) {
+    async function checkDatesClick(start, end) {
       clearTable();
-      var isCheck = await checkDates(start, end, label);
+      var isCheck = await checkDates(start, end);
       if (!isCheck) return;
       var data = await retrivePrice(start, end);
       createTableFromJSON(data);
     }
 
     daterange.on("clickPrev.daterangepicker", async function (ev, picker) {
+      await resizeCalendar(picker);
+    });
+
+    daterange.on("rented.daterangepicker", async function (ev, picker) {
+      var start = picker.startDate.startOf("day");
+      var end = picker.endDate.startOf("day");
+      var responce = await reserveOrRentProperty(start, end, "588610002");
+      _xrm.Utility.alertDialog(responce.Message);
+      await resizeCalendar(picker);
+    });
+
+    async function resizeCalendar(picker) {
       var rightCalendar = picker.rightCalendar;
       var month = rightCalendar.month.month();
       var year = rightCalendar.month.year();
@@ -175,28 +283,17 @@
       var year = leftCalendar.month.year();
       _firstDay = moment([year, month, 1]).startOf("day");
       _shortrent = await getShortRent(_firstDay, _lastDay);
-    });
-    daterange.on("cancel.daterangepicker", async function (ev, picker) {
-      var start = picker.startDate.startOf("day");
-      var end = picker.endDate.startOf("day");
-      var responce = await reserveOrRentProperty(start, end, "588610002");
-      _xrm.Utility.alertDialog(responce.Message);
-    });
-    daterange.on("rented.daterangepicker", async function (ev, picker) {
-      var start = picker.startDate.startOf("day");
-      var end = picker.endDate.startOf("day");
-      var responce = await reserveOrRentProperty(start, end, "588610003");
-      _xrm.Utility.alertDialog(responce.Message);
-    });
+      picker.updateCalendars();
+    }
 
     async function reserveOrRentProperty(start, end, status) {
       _xrm.Utility.showProgressIndicator("Loading");
-      var isCheck = await checkDates(start, end);
+      var isCheck = await checkDates(start, end, true);
       if (!isCheck) {
         _xrm.Utility.closeProgressIndicator();
         return;
       }
-      var logicalName = _inputParameter.logicalname;
+      var logicalName = "sl_property_for_opportunity";
       var id = _inputParameter.data;
       var request = {
         data: {
@@ -243,7 +340,7 @@
       }
     }
 
-    async function checkDates(start, end, label) {
+    async function checkDates(start, end, withRented) {
       start = start.startOf("day");
       end = end.startOf("day");
       var shortrent = await getShortRent(start, end);
@@ -254,6 +351,7 @@
         _xrm.Utility.alertDialog(`The number of rental days is too small.`);
         return;
       }
+      if (!withRented) return true;
       var checkFunc = (x) => {
         var from = new moment(x.dateFrom);
         var to = new moment(x.dateTo);
@@ -263,17 +361,6 @@
           (start <= from && end >= to)
         );
       };
-      var reservedByOpportunity =
-        shortrent.reservedByOpportunity && shortrent.reservedByOpportunity.find(checkFunc);
-      if (reservedByOpportunity) {
-        _xrm.Utility.alertDialog(`Dates are not available for selection`);
-        return;
-      }
-      /*var reserved = shortrent.reserved && shortrent.reserved.find(checkFunc);
-      if (reserved) {
-        _xrm.Utility.alertDialog(`Dates are not available for selection`);
-        return;
-      }*/
 
       var rentedByOpportunity =
         shortrent.rentedByOpportunity && shortrent.rentedByOpportunity.find(checkFunc);
@@ -282,16 +369,14 @@
         return;
       }
       return true;
-      /*var rented = shortrent.rented && shortrent.rented.find(checkFunc);
-      if (rented) {
-        _xrm.Utility.alertDialog(`Dates are not available for selection `);
-        return;
-      }*/
     }
 
     async function retrivePrice(startDate, endDate) {
       var logicalName = "sl_listing";
-      var id = _inputParameter.listingid;
+      if (!_inputData.listingid) {
+        _inputData.listingid = await retriveListingid();
+      }
+      var id = _inputData.listingid;
       var request = {
         data: {
           "@odata.type": `Microsoft.Dynamics.CRM.${logicalName}`,
@@ -331,15 +416,12 @@
     }
 
     function createTableFromJSON(data) {
-      var col = [];
-      for (var i = 0; i < data.length; i++) {
-        for (var key in data[i]) {
-          if (col.indexOf(key) === -1) {
-            col.push(key);
-          }
-        }
-      }
+      var isWithOwner = data.filter((x) => x.employee).length > 0;
+      var keys = Object.keys(data[0]);
+      var col = isWithOwner ? keys : keys.slice(0, 2);
+
       var table = document.createElement("table");
+      table.id = "rent_price";
       var tr = table.insertRow(-1);
       for (var i = 0; i < col.length; i++) {
         var th = document.createElement("th");
@@ -358,22 +440,93 @@
       tr = table.insertRow(-1);
       for (var j = 0; j < col.length; j++) {
         var tabCell = tr.insertCell(-1);
+        var column = col[j];
         tabCell.innerHTML =
-          col[j] == "date" ? "Rental fee" : data.map((x) => x.price).reduce((a, b) => a + b, 0);
+          column == "date"
+            ? "Rental fee"
+            : column == "price"
+            ? data.map((x) => x.price).reduce((a, b) => a + b, 0)
+            : "";
       }
-
-      var divContainer = document.getElementById("showData");
-      divContainer.innerHTML = "";
-      divContainer.appendChild(table);
+      $(".daterangepicker").append(table);
     }
 
     function clearTable() {
-      var divContainer = document.getElementById("showData");
-      divContainer.innerHTML = "";
+      var divContainer = document.getElementById("rent_price");
+      divContainer && divContainer.remove();
     }
 
     function capitalizeFirstLetter(string) {
-      return string.charAt(0).toUpperCase() + string.slice(1);
+      var split = string.split("_");
+      var newSyting = split.join(" ");
+      return newSyting.charAt(0).toUpperCase() + newSyting.slice(1);
+    }
+
+    async function setData() {
+      var minDaysEl = document.getElementById("minDays");
+      minDaysEl.value = _shortrent.minDays;
+      minDaysEl.disabled = true;
+
+      var opportunityEl = document.getElementById("listing");
+      opportunityEl.value = _inputData.listingName;
+      opportunityEl.disabled = true;
+
+      var opportunityEl = document.getElementById("opportunity");
+      opportunityEl.value = _inputData.opportunityName;
+      opportunityEl.disabled = true;
+
+      var propertyEl = document.getElementById("property");
+      propertyEl.value = _inputData.propertyName;
+      propertyEl.disabled = true;
+
+      var marketEl = document.getElementById("market");
+      marketEl.addEventListener("change", (x) => {
+        _inputData.market = x.target.value;
+        _inputData.listingid = "";
+      });
+      marketEl.disabled = _inputData.isMarketBlock;
+      var values = await getMarketData();
+      values.forEach((l) => {
+        const option = document.createElement("option");
+        option.text = l.value;
+        option.value = l.attributevalue;
+        option.id = l.attributevalue;
+        if (l.attributevalue == _inputData.market) option.selected = true;
+        marketEl.add(option, 0);
+      });
+    }
+
+    async function getMarketData() {
+      var url =
+        `${_xrm.Page.context.getClientUrl()}/api/data/v9.2/stringmaps?` +
+        `$select=value,attributevalue` +
+        `&$filter=attributename eq 'sl_marketcode' and objecttypecode eq 'opportunity'`;
+      var responce = await fetch(url);
+      var json = await responce.json();
+      return json.value;
+    }
+
+    async function retriveListingid() {
+      var marketcode = _inputData.market || document.getElementById("market").value;
+      var query = `<fetch top='1' no-lock='true' >
+                  <entity name='sl_listing' >
+                    <attribute name='sl_listingid' />
+                    <filter type='and' >
+                      <condition attribute='sl_marketcode' operator='eq' value='${marketcode}' />
+                      <condition attribute='sl_unitid' operator='eq' value='${_inputParameter.data}' />
+                      <condition attribute='sl_clients_promotion_typecode' operator='eq' value='102690002' />
+                    </filter>
+                  </entity>
+                  </fetch>`;
+      var response = await _xrm.WebApi.retrieveMultipleRecords(
+        "sl_listing",
+        "?fetchXml=" + query
+      );
+      if (response.entities.length == 0) {
+        _xrm.Navigation.openAlertDialog(`No listing for ${_inputParameter.name}`, { height: 120, width: 120 });
+        return;
+      }
+      return response.entities[0].sl_listingid;
     }
   })();
 </script>

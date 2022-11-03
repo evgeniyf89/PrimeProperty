@@ -1,0 +1,378 @@
+﻿<html>
+<head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.1.3/dist/css/bootstrap.min.css" rel="stylesheet" integrity="sha384-1BmE4kWBq78iYhFldvKuhfTAU6auU8tT94WrHftjDbrCEXSU1oBoqyl2QvZ6jIW3" crossorigin="anonymous">
+    <link href="https://ppcrm1.crm4.dynamics.com//WebResources/sl_reports/css/pagedefenition.css" rel="stylesheet">
+    <link href="https://ppcrm1.crm4.dynamics.com//WebResources/sl_reports/css/report_basic.css" rel="stylesheet">
+    <title id="PageTitle">Object</title>
+    <style>
+        .page {
+            font-family: "Trakya", sans-serif;
+            font-weight: 700;
+            font-size: 11pt;
+        }
+
+        .column-container {
+            padding-top: 10mm;
+        }
+
+        .gray-sticker {
+            background-color: #F2F2F2;
+            padding: 10mm 5mm 5mm 5mm;
+        }
+
+        .container-main {
+            padding-left: 10mm;
+            padding-right: 10mm;
+        }
+
+        .dashed-tip {
+            border-color: #7D7272;
+            border-top-style: dashed;
+            border-bottom-style: dashed;
+            border-width: 1mm;
+        }
+
+        .exclusive {
+            background-color: #F37B4A;
+            color: #FFF;
+            width: fit-content;
+            padding: 10px 30px;
+            margin-top: 2mm;
+        }
+
+        .label-gray {
+            color: #7D7272;
+        }
+
+        .img-gallery {
+            height: 42mm !important;
+            object-fit: cover;
+        }
+    </style>
+    <meta>
+    <meta>
+    <meta>
+    <meta>
+    <meta>
+</head>
+
+<body style="max-width: 210mm; overflow-wrap: break-word;" onfocusout="parent.setEmailRange();">
+
+    <div id="pageTemplate" class="page" style="height: 292mm;">
+        <header>
+            <div class="container-fluid">
+                <div class="row">
+                    <div class="col"> <img id="logo" src="images/logobbfwhite.png" class="logo"></div>
+                    <div class="col">
+                        <div class="project-name">
+                            <div class="d-inline prefix-container">
+                                <img src="images/logobbfwhite.png" class="prefix">
+                            </div>
+                            <div class="d-inline project-name-text">&nbsp;<span class="reportName"></span></div>
+                        </div>
+                        <div style="float: none;"></div><br>
+                        <span class="report-date"></span>
+                    </div>
+                </div>
+            </div>
+        </header>
+        <div class="document-body" style="height: 214mm; overflow-y:hidden; margin-top: 0;"></div>
+        <div class="emptyRow"></div>
+        <footer>
+            <div class="container-fluid">
+                <div class="row report-info" style="background-color: #FFF; padding-bottom: 3mm; font-size: medium; color: #FFF;">
+                    <div class="col-8"><span class="notification"></span></div>
+                    <div class="col text-end"><span class="pagenumber"></span></div>
+                </div>
+                <div class="row footer-colored">
+                    <div id="footerLeft" class="col-8">
+                        <h5 id="websiteUrl" class="websiteUrl"></h5>
+                        <p class="contact-data">
+                            <span id="phoneLabel" class="phoneLabel"></span>:&nbsp;<span id="phone" class="phone"></span>&nbsp;<span id="faxLabel" class="faxLabel"></span>:&nbsp;<span id="fax" class="fax"></span>&nbsp;<span id="emailLabel" class="emailLabel"></span>:&nbsp;<span id="email" class="email"></span>
+                        </p>
+                        <p class="contact-data"><span id="address" class="address"></span></p>
+                    </div>
+                    <div id="footerRight" class="col-4 text-end">
+                        <p class="contact-data">&nbsp;</p>
+                        <p class="contact-data">&nbsp;</p>
+                        <h5 id="tagline" class="tagline"></h5>
+                    </div>
+                </div>
+            </div>
+        </footer>
+    </div>
+
+    <div id="report-content" style="display: none;">
+        <div class="container-fluid container-main">
+            <div class="row">
+                <div class="col ">
+                    <div class="column-container">
+                        <div style="font-size: 15pt;"><span class="objectLabel"></span> | <span class="objectId"></span></div>
+                        <div style="font-size: 12pt;"><span class="areaLabel"></span>: <span class="area"></span></div>
+                        <div class="exclusive isExclusive"><span class="exclusiveLabel"></span></div>
+                        <img class="img-fluid previewUrl" id="preview" src="https://static.tildacdn.com/tild3830-3562-4865-b562-643637396531/view01_final.jpg" alt="preview">
+                    </div>
+                </div>
+                <div class="col">
+                    <div class="gray-sticker column-container">
+                        <div style="font-size: 13pt;"><span class="label-gray"><span class="priceLabel"></span>:</span> <span class="price"></span></div>
+                        <div><span class="vatStatus">(+ <span class="vatLabel"></span>)</span></div>
+                        <div class="dashed-tip characteristics">
+                            <div class="label-gray" style="padding-top: 2mm;padding-bottom: 2mm;"><span class="characteristicsLabel " style="font-size: 13pt;"></span>:</div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            <div class="row">
+                <div class="col description">
+                    <div><span class="label-gray descriptionLabel" style="font-size: 13pt;"></span>:</div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div id="report-gallery" style="display: none;">
+        <div class="container-fluid pictureGallery" style="padding: 7mm 20mm 7mm 20mm;">
+        </div>
+    </div>
+
+    <div id="report-map" style="display: none;">
+        <div class="container-fluid" style="padding: 7mm 20mm 7mm 20mm;">
+            <img class="img-fluid map" id="object-map" src="https://static.tildacdn.com/tild3830-3562-4865-b562-643637396531/view01_final.jpg" alt="map">
+        </div>
+    </div>
+
+
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.1.3/dist/js/bootstrap.bundle.min.js" integrity="sha384-ka7Sk0Gln4gmtz2MlQnikT1wXgYsOg+OMhuP+IlRH9sENBO0LRn5q+8nbTov4+1p" crossorigin="anonymous"></script>
+    <script type="text/javascript">
+        window.onload = windowLoad;
+        var inputData = `{
+                "metadata":{
+                    "websiteUrl": "bbf.com",
+                    "phoneLabel": "T",
+                    "phone": "+357 25 315 300",
+                    "faxLabel": "F",
+                    "fax": "+357 25 315 301",
+                    "emailLabel": "E",
+                    "email": "info@bbf.com",
+                    "address": "28 Ambelakion Street, Germasogeia 4046 Limassol, Cyprus P.O. Box 70649, 3801 Limassol",
+                    "tagline": "Build. Better. Future.",
+                    "objectLabel": "Apartment",
+                    "areaLabel": "Area",
+                    "priceLabel": "Price",
+                    "exclusiveLabel": "Exclusive",
+                    "descriptionLabel": "Description",
+                    "characteristicsLabel": "Characteristics",
+                    "vatLabel": "VAT",
+                    "reportName": "for sale",
+                    "withLogo": true
+                },
+                "objects": [
+                            {
+                                "objectId": {"label":"ID", "value": "7379"},
+                                "price": "€ 770,000",
+                                "vatStatus": true,
+                                "area": "Limassol, Papas",
+                                "isExclusive": true,
+                                "previewUrl": "https://static.tildacdn.com/tild3830-3562-4865-b562-643637396531/view01_final.jpg",
+                                "map": "https://masyamba.ru/ежик-картинки/83-картинки-про-ежиков.jpg",
+                                "characteristics": [
+                                    {"label":"Type", "value": "Apartment"},
+                                    {"label":"Stage", "value": "New"},
+                                    {"label":"Bedrooms", "value": "2"},
+                                    {"label":"Completion date", "value": "Grand Park Residence"},
+                                    {"label":"Block № / villa №", "value": "B"},
+                                    {"label":"Floor(s)", "value": "3"},
+                                    {"label":"Number of unit", "value": "302"},
+                                    {"label":"Indoor area, m<sup>2</sup>", "value": "93.0"},
+                                    {"label":"Cov. veranda, m<sup>2</sup>", "value": "23.0"},
+                                    {"label":"Total area, m<sup>2</sup>", "value": "116.0"},
+                                    {"label":"Distance to sea", "value": "150 m"},
+                                    {"label":"Views", "value": "City view"}
+                                ],
+                                "description": [
+                                    {"label":"Project", "value": "(PID:625) Grand Park Residence"},
+                                    {"label":"Owner Name", "value": "(UID:2430) Kulikov Andrey"},
+                                    {"label":"Client Type", "value": "Private owner"},
+                                    {"label":"Comission", "value": "10%"},
+                                    {"label":"Owner e-mail", "value": "an@k"},
+                                    {"label":"Notes", "value": "The seller is ready to give a bigger discount. The property has been bought and used for the citizenship application. The contact person (representative) 0079856439654, info.develop@bk.ru."},
+                                    {"label":"Google", "value": "34.6939, 33.0772"}
+                                ],
+                                "pictureGallery":[
+                                    "https://static.tildacdn.com/tild3830-3562-4865-b562-643637396531/view01_final.jpg",
+                                    "https://masyamba.ru/ежик-картинки/83-картинки-про-ежиков.jpg",
+                                    "https://static.tildacdn.com/tild3830-3562-4865-b562-643637396531/view01_final.jpg",
+                                    "https://static.tildacdn.com/tild3830-3562-4865-b562-643637396531/view01_final.jpg",
+                                    "https://static.tildacdn.com/tild3830-3562-4865-b562-643637396531/view01_final.jpg",
+                                    "https://static.tildacdn.com/tild3830-3562-4865-b562-643637396531/view01_final.jpg",
+                                    "https://static.tildacdn.com/tild3830-3562-4865-b562-643637396531/view01_final.jpg",
+                                    "https://static.tildacdn.com/tild3830-3562-4865-b562-643637396531/view01_final.jpg",
+                                    "https://static.tildacdn.com/tild3830-3562-4865-b562-643637396531/view01_final.jpg",
+                                    "https://static.tildacdn.com/tild3830-3562-4865-b562-643637396531/view01_final.jpg",
+                                    "https://static.tildacdn.com/tild3830-3562-4865-b562-643637396531/view01_final.jpg",
+                                    "https://static.tildacdn.com/tild3830-3562-4865-b562-643637396531/view01_final.jpg"
+                                ]
+                            }
+                        ]
+                }
+            `;
+
+        function windowLoad() {
+            buildReport(inputData);
+        }
+
+        function buildReport(inputData) {
+            inputObj = JSON.parse(inputData);
+            let objNumerator = 0;
+            for (let i = 0; i < inputObj["objects"].length; i++) {
+                const obj = inputObj["objects"][i];
+                processObject(obj, objNumerator);
+                processMetadata(inputObj, objNumerator);
+                objNumerator++;
+            }
+
+            finishPages();
+        }
+
+        function processObject(obj, page) {
+            addPrintable(page);
+            drawContent("report-content", 0, page);
+            drawContent("report-gallery", 0, page);
+            for (let key in obj) {
+                if (key == "map") {
+                    drawContent("report-map", 0, page);
+                }
+                if (obj.hasOwnProperty(key)) {
+                    let elems = document.getElementById("printable" + page).getElementsByClassName(key);
+                    if (elems) {
+                        for (let j = 0; j < elems.length; j++) {
+                            if (elems[j].nodeName == "IMG") {
+                                elems[j].src = obj[key];
+                            }
+                            else {
+                                if (typeof obj[key] == "boolean") {
+                                    if (obj[key] == false) elems[j].style.display = "none";
+                                }
+                                else if (Array.isArray(obj[key])) {
+                                    if (key == "characteristics") {
+                                        for (const detail in obj[key]) {
+                                            elems[j].innerHTML += `<span class="label-gray">${obj[key][detail]['label']}:</span>&emsp;${obj[key][detail]['value']}<br>`;
+                                        }
+                                    }
+                                    if (key == "description") {
+                                        for (const detail in obj[key]) {
+                                            elems[j].innerHTML += `${obj[key][detail]['label']}:&emsp;${obj[key][detail]['value']}<br>`;
+                                        }
+                                    }
+                                    if (key == "pictureGallery") {
+                                        let row = document.createElement("div");
+                                        row.className = "row";
+                                        row.style.paddingBottom = "6px";
+                                        for (const elem in obj[key]) {
+                                            let col = document.createElement("div");
+                                            let img = document.createElement("img");
+                                            col.className = "col";
+                                            col.style.paddingLeft = "3px";
+                                            col.style.paddingRight = "3px";
+                                            img.src = obj[key][elem];
+                                            img.classList.add("img-fluid");
+                                            img.classList.add("img-gallery");
+                                            col.appendChild(img);
+                                            row.appendChild(col);
+                                            if ((elem % 3 == 2) || (elem == obj[key].length - 1)) {
+                                                elems[j].appendChild(row);
+                                                row = document.createElement("div");
+                                                row.className = "row";
+                                                row.style.paddingBottom = "6px";
+                                            }
+                                        }
+                                    }
+                                }
+                                else if (typeof obj[key] == "object" && obj[key] != null && obj[key]["label"] != null && obj[key]["value"] != null) {
+                                    elems[j].innerHTML = obj[key]["label"] + " : " + obj[key]["value"];
+                                }
+                                else {
+                                    elems[j].innerHTML = obj[key];
+                                }
+                            }
+                        }
+                    }
+
+                }
+            }
+        }
+
+        function addPrintable(projectId = "") {
+            let printableDiv = document.createElement("div");
+            printableDiv.id = "printable" + projectId;
+            printableDiv.style.maxWidth = "210mm";
+            printableDiv.style.pageBreakAfter = "always";
+            document.getElementsByTagName("body")[0].appendChild(printableDiv);
+        }
+
+        function processMetadata(obj, printable) {
+            if (obj["metadata"]) {
+                const metadata = obj["metadata"];
+                if (!metadata.withLogo) {
+                    document.getElementById("printable" + printable).getElementById("logo").style.display = "none";
+                    document.getElementById("printable" + printable).getElementById("footerLeft").style.display = "none";
+                    document.getElementById("printable" + printable).getElementById("footerRight").style.display = "none";
+                }
+                for (const record in metadata) {
+                    let elems = document.getElementById("printable" + printable).getElementsByClassName(record);
+                    if (elems) {
+                        for (let j = 0; j < elems.length; j++) {
+                            elems[j].innerHTML = metadata[record];
+                        }
+                    }
+
+                }
+            }
+        }
+
+        function drawContent(template = "report-content", pageNum = 0, projectId = "", showHeader = "visible") {
+            let content = document.getElementById(template);
+            let page = drawPage(pageNum, projectId, showHeader);
+            let data = content.cloneNode(true);
+            data.style.display = "block";
+            data.style["overflow-y"] = "hidden";
+            data.id = template + pageNum;
+            page.getElementsByClassName("document-body")[0].appendChild(data);
+            return page;
+        }
+
+        function drawPage(pageId, projectId = "", showHeader = "visible") {
+            let page = document.getElementById("pageTemplate").cloneNode(true);
+            page.style.display = "block";
+            page.id = "page" + pageId;
+            page.style.pageBreakAfter = "always"
+            page.getElementsByTagName("header")[0].style.visibility = showHeader;
+            document.getElementById("printable" + projectId).appendChild(page);
+            return page;
+        }
+
+        function finishPage(height = 1127, projectId = "") {
+            var previous = document.getElementById("printable" + projectId).lastChild;
+            if (previous != null && previous.getElementsByClassName("emptyRow")) {
+                if (previous.scrollHeight != height)
+                    previous.getElementsByClassName("emptyRow")[0].style.height = (height - previous.scrollHeight) + "px";
+            }
+        }
+
+        function finishPages(height = 1120) {
+            var pages = document.getElementsByClassName("page");
+            if (pages) {
+                for (let j = 0; j < pages.length; j++) {
+                    pages[j].getElementsByClassName("pagenumber")[0].innerHTML = "Page " + j + " of " + (pages.length - 1);
+                }
+            }
+        }
+
+    </script>
+
+
+</body>
+</html>
